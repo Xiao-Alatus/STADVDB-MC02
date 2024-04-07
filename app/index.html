@@ -3,43 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script> src="script.js"</script>
-    <style>
-        body {
-            font-size:1.5em;
-
-            margin:auto;
-            margin-top: 1.5em;
-            width: 50%;
-        }
-
-        body > div {
-            margin-bottom: 1em;
-            border-style: solid;
-            border-width: 0.1px;
-            border-radius: 0.3em;
-
-            padding: 0.5em;
-        }
-    </style>
+    <title>SeriousMD</title>
+    <link rel="icon" href="https://seeklogo.com/images/S/seriousmd-logo-3279FC79EC-seeklogo.com.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
 </head>
 <body>
-    <div>
-        <label for="readInput">Read Appointment</label>
-        <input type="text" id="readInput" placeholder="Enter appointment id">
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark font-weight-bold">
+        <a class="navbar-brand" href="#">SeriousMD</a>
+        <a class="navbar-brand ml-auto" href="https://github.com/Xiao-Alatus/STADVDB-MC02"><img src="https://github.com/fluidicon.png" width="30" height="30" alt="GitHub Repo"></a>
+    </nav>
+    <div class="container">
+         <!-- Page Title -->
+         <div class="text-center h3 p-3">Transaction Management Simulator</div>
+        <!-- Buttons -->
+        <div class="btn-group d-flex">
+          <button class="btn w-50" id="simTypeBtn1" disabled>Concurrency Control and Consistency</button>
+          <button class="btn w-50" id="simTypeBtn2">Global Failure and Recovery</button>
+        </div>
+        <!-- Concurrency Control and Consistency -->
+        <div id="concurrencyFormContainer" class="border p-3 my-3">  
+          <form id="concurrencyForm"></form>        
+            <!-- Isolation Type -->
+            <div class="form-group my-2">
+              <label for="isolationLevel" class="font-weight-bold">Isolation Level</label>
+              <select class="form-control" id="isolationLevel" disabled required>
+                <option value="read_uncommitted">Read Uncommitted</option>
+              </select>
+            </div>
+            <!-- Transaction Case -->
+            <div class="form-group my-2">
+              <label for="transactionCase" class="font-weight-bold">Concurrency Case</label>
+              <select class="form-control" id="transactionCase" required>
+                <option value="1">2 Nodes Reading Same Item</option>
+                <option value="2">1 Node Writing, 1 Node Reading Same Item</option>
+                <option value="3">2 Nodes Writing Same Item</option>
+              </select>
+            </div>
+            <!-- Side Effect -->
+            <div class="form-group my-2">
+              <label for="sideEffect" class="font-weight-bold">Side Effect</label>
+              <select class="form-control" id="sideEffect" required>
+                <option value="1">Dirty Read</option>
+                <option value="2">Non-Repeatable Read</option>
+                <option value="3">Phantom Read</option>
+              </select>
+            </div>
+            <!-- Transactions -->
+            <div class="form-group my-2">
+                <label for="transaction1" class="font-weight-bold">Transaction 1</label>
+                <textarea class="w-100 px-1" id="transaction1" rows="8" style="resize:none;" readonly required></textarea>
+                <label for="transaction2" class="font-weight-bold">Transaction 2</label>
+                <textarea class="w-100 px-1" id="transaction2" rows="8" style="resize:none;" readonly required></textarea>
+                <div id="statusContainer">
+                  <label for="transactionStatus">Status</label>
+                  <select class="form-control" id="transactionStatus" required>
+                    <option value="Complete">Complete</option>
+                    <option value="Queued">Queued</option>
+                    <option value="Cancel">Cancel</option>
+                    <option value="Serving">Serving</option>
+                    <option value="NoShow">NoShow</option>
+                    <option value="Skip">Skip</option>
+                  </select>
+                </div>
+                <div class="my-2">
+                  <label for="transactionId">Appointment ID</label>
+                  <input type="text" class="form-control" id="transactionId" maxlength="32" required>
+                  <p id="error-message" class="error-message m-0 p-0 mt-1">Appointment ID must be 32 hexadecimal characters</p>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm my-2" id="customizeTransaction">Customize Query</button>
+                <button type="submit" class="btn btn-success btn-sm" id="submitConcurrency">Simulate Concurrency</button>
+            </div>
+          </form>
+       </div>
+        <!-- SQL Results Table Before and After -->
+        
+        <!-- Results Log-->
     </div>
-    <div>
-        <label for="insertInput">Insert Appointment</label>
-        <input type="text" id="insertInput" placeholder="Enter appointment id">
-    </div>
-    <div>
-        <label for="updateInput">Update Appointment</label>
-        <input type="text" id="updateInput" placeholder="Enter appointment id">
-    </div>
-    <div>
-        <label for="deleteInput">Delete Appointment</label>
-        <input type="text" id="deleteInput" placeholder="Enter appointment id">
-    </div>
+    <script src="script.js"></script>
 </body>
 </html>

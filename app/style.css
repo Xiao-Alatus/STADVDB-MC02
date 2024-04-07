@@ -1,0 +1,21 @@
+button#simTypeBtn1 {
+    background-color: #0D6EFD;
+    color: white;
+}
+button#simTypeBtn1:disabled {
+    opacity: 1;
+}
+
+button#simTypeBtn2 {
+    background-color: #6C757D;
+    color: white;
+}
+
+button#simTypeBtn2:disabled {
+    opacity: 1;
+}
+
+.error-message {
+    display: none;
+    color: red;
+}

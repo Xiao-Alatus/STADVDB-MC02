@@ -1,8 +1,11 @@
 const express = require("express"); 
 const app = express(); // Initializing Express App
 
+app.use(express.static(__dirname + '/app'));
+
 app.get("/", (req, res)=>{
-    res.send('Hello World'); 
+    // open index.html
+    res.sendFile(__dirname + '/app/index.html');
 });
 
 app.get("/read/:id", (req, res)=>{
