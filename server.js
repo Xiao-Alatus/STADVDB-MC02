@@ -1,27 +1,16 @@
 const express = require("express"); 
-const app = express(); // Initializing Express App
+const route = require('./routes/route');
 
-app.use(express.static(__dirname + '/app'));
+const app = express();
 
-app.get("/", (req, res)=>{
-    // open index.html
-    res.sendFile(__dirname + '/app/index.html');
+// Middleware
+app.use(express.json());
+
+// Route
+app.use('/', route);
+
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}.`);
 });
-
-app.get("/read/:id", (req, res)=>{
-    res.send('read path'); 
-});
-
-app.post("/insert/:id", (req, res)=>{
-    res.send('insert path'); 
-});
-
-app.patch("/update/:id", (req, res)=>{
-    res.send('update path'); 
-});
-
-app.delete("/delete/:id", (req, res)=>{
-    res.send('delete path'); 
-});
-
-app.listen(3000, ()=> console.log("App Listening on port 3000"));

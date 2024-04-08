@@ -24,7 +24,7 @@
         </div>
         <!-- Concurrency Control and Consistency -->
         <div id="concurrencyFormContainer" class="border p-3 my-3">  
-          <form id="concurrencyForm"></form>        
+          <form id="concurrencyForm" action="/execute-query" method="POST">       
             <!-- Isolation Type -->
             <div class="form-group my-2">
               <label for="isolationLevel" class="font-weight-bold">Isolation Level</label>
@@ -69,7 +69,7 @@
                 </div>
                 <div class="my-2">
                   <label for="transactionId">Appointment ID</label>
-                  <input type="text" class="form-control" id="transactionId" maxlength="32" required>
+                  <input type="text" class="form-control" id="transactionId" maxlength="32">
                   <p id="error-message" class="error-message m-0 p-0 mt-1">Appointment ID must be 32 hexadecimal characters</p>
                 </div>
                 <button type="button" class="btn btn-primary btn-sm my-2" id="customizeTransaction">Customize Query</button>
@@ -78,8 +78,35 @@
           </form>
        </div>
         <!-- SQL Results Table Before and After -->
-        
-        <!-- Results Log-->
+        <div class="border py-3 my-3">
+          <div class="text-center h5">Resulting SQL Table</div>
+          <div id="no-query-desc" class="p-3">No query loaded yet.</div>
+          <div id="query-load-spinner" class="justify-content-center mt-4"><div class="spinner-border text-primary d-flex"><span class="sr-only">Executing query...</span></div></div>
+          <div id="sql-table-container" class="table-responsive">
+            <table id="resultTable" class="table table-striped table-bordered mx-3 my-2">
+            </table>
+          </div>
+        </div>
+        <!-- Output Log-->
+        <div class="border py-3 my-3">
+          <div class="text-center h5">Output Log</div>
+          <div class="table-responsive d-flex">
+            <table class="table table-striped table-bordered mx-3 my-2">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Time</th>
+                  <th>Statement</th>
+                  <th>Message</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                </tr>
+              </tbody>
+            </table>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
