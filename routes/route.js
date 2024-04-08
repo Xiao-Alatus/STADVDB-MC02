@@ -23,57 +23,46 @@ router.get("/", (req, res)=>{
     res.sendFile(path.join(__dirname + '../app/index.html'));
 });
 
-// For concurrency control
 router.post("/execute-query", async (req, res)=>{
     try {
-        const transaction1 = req.body.transaction1.replace(/\n/g, ' ');
-        const transaction2 = req.body.transaction2.replace(/\n/g, ' ');
-        const transactionCase = req.body.transactionCase;
-
-        const result1 = await executeTransaction(transaction1);
-        const result2 = await executeTransaction(transaction2);
-
-        res.json({
-            result1,
-            result2
-        });
+        const { transaction } = req.body;
+        // Get rid of the \n
+        const sqlTransaction = transaction.replace(/\n/g, ' ');
+        const results = await executeTransaction(sqlTransaction);
+        res.status(200).json({ results });
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Transaction execution
-function executeTransaction(sqlQuery) {
-    const statements = sqlQuery.split(';').filter(statement => statement.trim() !== '');
+// Execute transaction
+async function executeTransaction(sqlTransaction) {
+    const sqlStatements = sqlTransaction.split(';');
     const results = [];
-    return new Promise((resolve, reject) => {
-        const executeNext = async(index) => {
-            if (index >= statements.length) {
-                resolve(results);
-                return;
-            }
-            const currentQuery = statements[index] + ';';
-            try {
-                const result = await executeQuery(currentQuery);
-                results.push(result);
-                executeNext(index + 1);
-            } catch (error) {
-                reject(error);
-            }
+    // Execute each SQL statement sequentially
+    for (let i = 0; i < sqlStatements.length; i++) {
+        if (sqlStatements[i].trim() === '') {
+            continue;
         }
-
-        executeNext(0);
-    });
+        try {
+            const result = await executeSQL(sqlStatements[i]);
+            results.push(result);
+        } catch (error) {
+            throw error;
+        }
+    }
+    return results;
 }
 
-function executeQuery(sqlQuery) {
+// Execute SQL
+function executeSQL(sqlStatement) {
     return new Promise((resolve, reject) => {
-        connection.query(sqlQuery, (err, result) => {
+        connection.query(sqlStatement, (err, result) => {
             if (err) {
-                reject(err);
+                reject(err); // Reject with error if query fails
             } else {
-                resolve(result);
+                resolve(result); // Resolve with result if query succeeds
             }
         });
     });

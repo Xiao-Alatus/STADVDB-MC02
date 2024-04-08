@@ -34,28 +34,18 @@
             </div>
             <!-- Transaction Case -->
             <div class="form-group my-2">
-              <label for="transactionCase" class="font-weight-bold">Concurrency Case</label>
+              <label for="transactionCase" class="font-weight-bold">Transaction Type</label>
               <select class="form-control" id="transactionCase" required>
-                <option value="1">2 Nodes Reading Same Item</option>
-                <option value="2">1 Node Writing, 1 Node Reading Same Item</option>
-                <option value="3">2 Nodes Writing Same Item</option>
-              </select>
-            </div>
-            <!-- Side Effect -->
-            <div class="form-group my-2">
-              <label for="sideEffect" class="font-weight-bold">Side Effect</label>
-              <select class="form-control" id="sideEffect" required>
-                <option value="1">Dirty Read</option>
-                <option value="2">Non-Repeatable Read</option>
-                <option value="3">Phantom Read</option>
+                <option value="1">Read</option>
+                <option value="2">Update</option>
+                <option value="3">Insert</option>
+                <option value="4">Delete</option>
               </select>
             </div>
             <!-- Transactions -->
             <div class="form-group my-2">
-                <label for="transaction1" class="font-weight-bold">Transaction 1</label>
-                <textarea class="w-100 px-1" id="transaction1" rows="8" style="resize:none;" readonly required></textarea>
-                <label for="transaction2" class="font-weight-bold">Transaction 2</label>
-                <textarea class="w-100 px-1" id="transaction2" rows="8" style="resize:none;" readonly required></textarea>
+                <label for="transaction1" class="font-weight-bold">Transaction </label>
+                <textarea class="w-100 px-2" id="transaction1" rows="5" style="resize:none;" required></textarea>
                 <div id="statusContainer">
                   <label for="transactionStatus">Status</label>
                   <select class="form-control" id="transactionStatus" required>
@@ -67,7 +57,7 @@
                     <option value="Skip">Skip</option>
                   </select>
                 </div>
-                <div class="my-2">
+                <div class="mb-2">
                   <label for="transactionId">Appointment ID</label>
                   <input type="text" class="form-control" id="transactionId" maxlength="32">
                   <p id="error-message" class="error-message m-0 p-0 mt-1">Appointment ID must be 32 hexadecimal characters</p>
