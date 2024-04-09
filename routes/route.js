@@ -7,8 +7,8 @@ const path = require("path");
 const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "password",
-    database: "apptdb",
+    password: "12345",
+    database: "apptdb_luzon",
     port: 3306
 });
 
@@ -34,6 +34,14 @@ function executeSQL(sqlStatements) {
                         reject(err);
                     });
                 }
+                // DO SLEEP(5) to simulate a long running transaction
+                connection.query('DO SLEEP(5);', err => {
+                    if (err) {
+                        return connection.rollback(() => {
+                            reject(err);
+                        });
+                    }
+                });
                 const promises = sqlStatements.map(statement => new Promise((resolve, reject) => {
                     connection.query(statement, (err, result) => {
                         if (err) {
@@ -64,30 +72,27 @@ function executeSQL(sqlStatements) {
 }
 
 // Search
-router.post("/search", (req, res) => {
+router.post("/search", async (req, res) => {
     const appointmentID = req.body.searchInput;
-    let sql = "SELECT * FROM apptdb.appointments";
+    let sql = "SELECT * FROM appointments";
     if (appointmentID) {
         // Ensure the appointmentID is properly sanitized to prevent SQL injection
         sql += ` WHERE apptid = ${connection.escape(appointmentID)}`;
     }
-
-    connection.query(sql, (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Error executing SQL query" });
-        }
-        res.json(result);
-    });
+    const result = await executeSQL([sql]);
+    res.json(result);
 });
 
 
 // ADD
 router.post("/add", async (req, res) => {
     try {
-        const { apptid, status, city, province, regionName } = req.body;
+        // For boolean values, 1 is true and 0 is false
+        const newVirtual = req.body.Virtual ? 1 : 0;
+        // Extract the date from the QueueDate string
+        const { apptid, pxid, doctorid, status, QueueDate, Type, Virtual, hospitalname, City, Province, Region } = req.body;
         const sqlStatements = [
-            `INSERT INTO apptdb.appointments (apptid, status, City, Province, RegionName) VALUES ('${apptid}', '${status}', '${city}', '${province}', '${regionName}')`
+            `INSERT INTO appointments (apptid, pxid, doctorid, status, QueueDate, \`type\`, \`Virtual\`, hospitalname, City, Province, Region) VALUES ('${apptid}', '${pxid}', '${doctorid}', '${status}', '${QueueDate}', '${Type}', '${newVirtual}', '${hospitalname}', '${City}', '${Province}', '${Region}')`
         ];
         const result = await executeSQL(sqlStatements);
         res.json(result);
@@ -102,7 +107,7 @@ router.post("/delete", async (req, res) => {
     try {
         const appointmentID = req.body.searchInput; 
         const sqlStatements = [
-            `DELETE FROM apptdb.appointments WHERE apptid = '${appointmentID}'`
+            `DELETE FROM appointments WHERE apptid = '${appointmentID}'`
         ];
         await executeSQL(sqlStatements);
         res.status(200).send('Appointment deleted successfully');
@@ -116,9 +121,12 @@ router.post("/delete", async (req, res) => {
 // EDIT
 router.post("/edit", async (req, res) => {
     try {
-        const { apptid, status, city, province, regionName } = req.body;
+        // For boolean values, 1 is true and 0 is false
+        const newVirtual = req.body.Virtual ? 1 : 0;
+        // Extract the date from the QueueDate string
+        const { apptid, pxid, doctorid, status, QueueDate, Type, Virtual, hospitalname, City, Province } = req.body;
         const sqlStatements = [
-            `UPDATE apptdb.appointments SET status = '${status}', City = '${city}', Province = '${province}', RegionName = '${regionName}' WHERE apptid = '${apptid}'`
+            `UPDATE appointments SET status = '${status}', QueueDate = '${QueueDate}', \`type\` = '${Type}', \`Virtual\` = '${newVirtual}', hospitalname = '${hospitalname}', City = '${City}', Province = '${Province}' WHERE apptid = '${apptid}'`
         ];
         const result = await executeSQL(sqlStatements);
         res.json(result);
