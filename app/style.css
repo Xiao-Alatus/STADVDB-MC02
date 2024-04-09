@@ -1,21 +1,11 @@
-button#simTypeBtn1 {
-    background-color: #0D6EFD;
-    color: white;
-}
-button#simTypeBtn1:disabled {
-    opacity: 1;
-}
-
-button#simTypeBtn2 {
-    background-color: #6C757D;
-    color: white;
-}
-
-button#simTypeBtn2:disabled {
-    opacity: 1;
-}
-
-.error-message {
+#add-appointment-modal-container {
     display: none;
-    color: red;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
 }

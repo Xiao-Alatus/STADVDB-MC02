@@ -23,37 +23,22 @@ router.get("/", (req, res)=>{
     res.sendFile(path.join(__dirname + '../app/index.html'));
 });
 
-router.post("/execute-query", async (req, res)=>{
+// Search
+router.post("/search", async (req, res)=>{
     try {
-        const { transaction } = req.body;
-        // Get rid of the \n
-        const sqlTransaction = transaction.replace(/\n/g, ' ');
-        const results = await executeTransaction(sqlTransaction);
-        res.status(200).json({ results });
+        const appointmentID = req.body.searchInput
+        var sql = `SELECT * FROM apptdb.appointments`;
+        if (appointmentID) {
+            sql = `SELECT * FROM apptdb.appointments WHERE apptid = '${appointmentID}'`;
+        }
+        const result = await executeSQL(sql);
+        console.log(result)
+        res.json(result);
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: error.message });
     }
 });
-
-// Execute transaction
-async function executeTransaction(sqlTransaction) {
-    const sqlStatements = sqlTransaction.split(';');
-    const results = [];
-    // Execute each SQL statement sequentially
-    for (let i = 0; i < sqlStatements.length; i++) {
-        if (sqlStatements[i].trim() === '') {
-            continue;
-        }
-        try {
-            const result = await executeSQL(sqlStatements[i]);
-            results.push(result);
-        } catch (error) {
-            throw error;
-        }
-    }
-    return results;
-}
 
 // Execute SQL
 function executeSQL(sqlStatement) {

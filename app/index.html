@@ -7,97 +7,87 @@
     <link rel="icon" href="https://seeklogo.com/images/S/seriousmd-logo-3279FC79EC-seeklogo.com.png">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark font-weight-bold">
         <a class="navbar-brand" href="#">SeriousMD</a>
-        <a class="navbar-brand ml-auto" href="https://github.com/Xiao-Alatus/STADVDB-MC02"><img src="https://github.com/fluidicon.png" width="30" height="30" alt="GitHub Repo"></a>
+        <button class="btn btn-outline-success btn-sm ml-auto mr-4" id="nodeStatusBtn">View Nodes</button>
+        <a href="https://github.com/Xiao-Alatus/STADVDB-MC02" class="text-white"><img src="https://github.com/fluidicon.png" width="30" height="30" alt="GitHub Repo"></a>
     </nav>
-    <div class="container">
-         <!-- Page Title -->
-         <div class="text-center h3 p-3">Transaction Management Simulator</div>
-        <!-- Buttons -->
-        <div class="btn-group d-flex">
-          <button class="btn w-50" id="simTypeBtn1" disabled>Concurrency Control and Consistency</button>
-          <button class="btn w-50" id="simTypeBtn2">Global Failure and Recovery</button>
+    <div class="px-4 mx-auto">
+        <!-- Page Title -->
+        <div class="h3 my-3 py-2">View Appointments</div>
+        <!-- Search Bar -->
+        <div class="input-group rounded">
+          <input type="search" class="form-control rounded" placeholder="Find Appointment ID" aria-label="Search" aria-describedby="searchBtn" id="searchInput">
+          <button class="btn border btn-light" type="button" id="searchBtn"><i class="bi bi-search"></i></button>
         </div>
-        <!-- Concurrency Control and Consistency -->
-        <div id="concurrencyFormContainer" class="border p-3 my-3">  
-          <form id="concurrencyForm" action="/execute-query" method="POST">       
-            <!-- Isolation Type -->
-            <div class="form-group my-2">
-              <label for="isolationLevel" class="font-weight-bold">Isolation Level</label>
-              <select class="form-control" id="isolationLevel" disabled required>
-                <option value="read_uncommitted">Read Uncommitted</option>
-              </select>
+        <!-- CRUD Options -->
+        <button class="btn btn-primary my-3" id="createBtn">Add Appointment</button>
+        <!-- Search Results -->
+        <div class="border py-3 my-1">
+          <div class="h5 ml-3">Appointment Records Searched</div>
+          <div id="sql-table-container" class="table-responsive d-flex">
+            <table id="resultTable" class="table table-striped table-bordered mx-3 my-2">
+              <thead>
+                <tr>
+                  <th scope="col">Appointment ID</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">City</th>
+                  <th scope="col">Province</th>
+                  <th scope="col">Region</th>
+                  <th scope="col"></th>
+                  <th scope="col"></th>
+                </tr>
+            </table>
+            <div id="query-load-spinner" class="justify-content-center mt-4" style="display:none;"><div class="spinner-border text-primary d-flex"><span class="sr-only">Executing query...</span></div></div>
+          </div>
+        </div>
+    </div>
+    <!-- Add Appointment Modal -->
+    <div id="add-appointment-modal-container">
+      <div class="add-appointment-modal d-flex h-100 justify-content-center align-items-center">
+        <div class="bg-light w-75 p-4 rounded">
+          <div class="h5 mb-3">Add Appointment</div>
+          <form id="add-appointment-form">
+            <div class="form-group m-0">
+              <label for="appointmentID">Appointment ID</label>
+              <input type="text" class="form-control" id="apptid" name="apptid" required>
             </div>
-            <!-- Transaction Case -->
-            <div class="form-group my-2">
-              <label for="transactionCase" class="font-weight-bold">Transaction Type</label>
-              <select class="form-control" id="transactionCase" required>
-                <option value="1">Read</option>
-                <option value="2">Update</option>
-                <option value="3">Insert</option>
-                <option value="4">Delete</option>
-              </select>
-            </div>
-            <!-- Transactions -->
-            <div class="form-group my-2">
-                <label for="transaction1" class="font-weight-bold">Transaction </label>
-                <textarea class="w-100 px-2" id="transaction1" rows="5" style="resize:none;" required></textarea>
-                <div id="statusContainer">
-                  <label for="transactionStatus">Status</label>
-                  <select class="form-control" id="transactionStatus" required>
+            <div class="form-group m-0 my-1">
+              <label for="status">Status</label>
+              <select class="form-control p-1" id="status" name="status">
                     <option value="Complete">Complete</option>
                     <option value="Queued">Queued</option>
                     <option value="Cancel">Cancel</option>
                     <option value="Serving">Serving</option>
                     <option value="NoShow">NoShow</option>
                     <option value="Skip">Skip</option>
-                  </select>
-                </div>
-                <div class="mb-2">
-                  <label for="transactionId">Appointment ID</label>
-                  <input type="text" class="form-control" id="transactionId" maxlength="32">
-                  <p id="error-message" class="error-message m-0 p-0 mt-1">Appointment ID must be 32 hexadecimal characters</p>
-                </div>
-                <button type="button" class="btn btn-primary btn-sm my-2" id="customizeTransaction">Customize Query</button>
-                <button type="submit" class="btn btn-success btn-sm" id="submitConcurrency">Simulate Concurrency</button>
+              </select>
             </div>
+            <div class="form-group m-0 my-1">
+              <label for="city">City</label>
+              <input type="text" class="form-control" id="city" name="city" required>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="province">Province</label>
+              <input type="text" class="form-control" id="province" name="province" required>
+            </div>
+            <div class="form-group mb-3">
+              <label for="region">Region</label>
+              <input type="text" class="form-control" id="region" name="region" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add</button>
+            <button type="button" class="btn btn-secondary" id="closeAddModalBtn">Close</button>
           </form>
-       </div>
-        <!-- SQL Results Table Before and After -->
-        <div class="border py-3 my-3">
-          <div class="text-center h5">Resulting SQL Table</div>
-          <div id="no-query-desc" class="p-3">No query loaded yet.</div>
-          <div id="query-load-spinner" class="justify-content-center mt-4"><div class="spinner-border text-primary d-flex"><span class="sr-only">Executing query...</span></div></div>
-          <div id="sql-table-container" class="table-responsive">
-            <table id="resultTable" class="table table-striped table-bordered mx-3 my-2">
-            </table>
-          </div>
         </div>
-        <!-- Output Log-->
-        <div class="border py-3 my-3">
-          <div class="text-center h5">Output Log</div>
-          <div class="table-responsive d-flex">
-            <table class="table table-striped table-bordered mx-3 my-2">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Time</th>
-                  <th>Statement</th>
-                  <th>Message</th>
-                  <th>Duration</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                </tr>
-              </tbody>
-            </table>
-        </div>
+      </div>
     </div>
+  <footer class="footer mt-5 bg-dark text-white w-100">
+      <div class="container text-center py-3"></div>
+  </footer>
     <script src="script.js"></script>
 </body>
 </html>
