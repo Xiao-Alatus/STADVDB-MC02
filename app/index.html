@@ -13,8 +13,7 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark font-weight-bold">
         <a class="navbar-brand" href="#">SeriousMD</a>
-        <button class="btn btn-outline-success btn-sm ml-auto mr-4" id="nodeStatusBtn">View Nodes</button>
-        <a href="https://github.com/Xiao-Alatus/STADVDB-MC02" class="text-white"><img src="https://github.com/fluidicon.png" width="30" height="30" alt="GitHub Repo"></a>
+        <a href="https://github.com/Xiao-Alatus/STADVDB-MC02" class="text-white ml-auto"><img src="https://github.com/fluidicon.png" width="30" height="30" alt="GitHub Repo"></a>
     </nav>
     <div class="px-4 mx-auto">
         <!-- Page Title -->
@@ -54,11 +53,12 @@
           <form id="add-appointment-form">
             <div class="form-group m-0">
               <label for="appointmentID">Appointment ID</label>
-              <input type="text" class="form-control" id="apptid" name="apptid" required>
+              <input type="text" class="form-control" id="appointmentID" name="apptid" placeholder="AAAABBBBCCCCDDDDAAAABBBBCCCCDDDD" maxlength="32" required>
+              <p id="error-message" class="error-message m-0 p-0 mt-1">Appointment ID must be 32 hexadecimal characters</p>
             </div>
             <div class="form-group m-0 my-1">
               <label for="status">Status</label>
-              <select class="form-control p-1" id="status" name="status">
+              <select class="form-control p-1" id="status" name="status" required>
                     <option value="Complete">Complete</option>
                     <option value="Queued">Queued</option>
                     <option value="Cancel">Cancel</option>
@@ -69,25 +69,97 @@
             </div>
             <div class="form-group m-0 my-1">
               <label for="city">City</label>
-              <input type="text" class="form-control" id="city" name="city" required>
+              <input type="text" class="form-control" id="city" name="city">
             </div>
             <div class="form-group m-0 my-1">
               <label for="province">Province</label>
-              <input type="text" class="form-control" id="province" name="province" required>
+              <input type="text" class="form-control" id="province" name="province">
             </div>
             <div class="form-group mb-3">
-              <label for="region">Region</label>
-              <input type="text" class="form-control" id="region" name="region" required>
+              <label for="status">Region</label>
+              <select class="form-control p-1" id="regionName" name="regionName" required>
+                <option value="National Capital Region (NCR)">National Capital Region (NCR)</option>
+                <option value="Ilocos Region (I)">Ilocos Region (I)</option>
+                <option value="Caraga (XIII)">Caraga (XIII)</option>
+                <option value="Cagayan Valley (II)">Cagayan Valley (II)</option>
+                <option value="Central Visayas (VII)">Central Visayas (VII)</option>
+                <option value="CALABARZON (IV-A)">CALABARZON (IV-A)</option>
+                <option value="Western Visayas (VI)">Western Visayas (VI)</option>
+                <option value="Central Luzon (III)">Central Luzon (III)</option>
+                <option value="MIMAROPA (IV-B)">MIMAROPA (IV-B)</option>
+                <option value="Bicol Region (V)">Bicol Region (V)</option>
+                <option value="Davao Region (XI)">Davao Region (XI)</option>
+                <option value="SOCCSKSARGEN (Cotabato Region) (XII)">SOCCSKSARGEN (Cotabato Region) (XII)</option>
+                <option value="Northern Mindanao (X)">Northern Mindanao (X)</option>
+                <option value="Zamboanga Peninsula (IX)">Zamboanga Peninsula (IX)</option>
+                <option value="Eastern Visayas (VIII)">Eastern Visayas (VIII)</option>
+                <option value="Cordillera Administrative Region (CAR)">Cordillera Administrative Region (CAR)</option>
+                <option value="Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)">Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)</option>
+              </select>
             </div>
-            <button type="submit" class="btn btn-primary">Add</button>
-            <button type="button" class="btn btn-secondary" id="closeAddModalBtn">Close</button>
+            <button type="submit" class="btn btn-primary" id="addApptBtn">Add</button>
+            <button type="button" class="btn btn-secondary" id="closeAddApptBtn">Close</button>
           </form>
         </div>
       </div>
     </div>
-  <footer class="footer mt-5 bg-dark text-white w-100">
-      <div class="container text-center py-3"></div>
-  </footer>
+    <!-- Edit Appointment Modal -->
+    <div id="edit-appointment-modal-container">
+      <div class="edit-appointment-modal d-flex h-100 justify-content-center align-items-center">
+        <div class="bg-light w-75 p-4 rounded">
+          <div class="h5 mb-3">Edit Appointment</div>
+          <form id="edit-appointment-form">
+            <div class="form-group m-0">
+              <label for="appointmentID">Appointment ID</label>
+              <input type="text" class="form-control" id="editAppointmentID" name="apptid" readonly>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="status">Status</label>
+              <select class="form-control p-1" id="editStatus" name="status" required>
+                    <option value="Complete">Complete</option>
+                    <option value="Queued">Queued</option>
+                    <option value="Cancel">Cancel</option>
+                    <option value="Serving">Serving</option>
+                    <option value="NoShow">NoShow</option>
+                    <option value="Skip">Skip</option>
+              </select>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="city">City</label>
+              <input type="text" class="form-control" id="editCity" name="city">
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="province">Province</label>
+              <input type="text" class="form-control" id="editProvince" name="province">
+            </div>
+            <div class="form-group mb-3">
+              <label for="status">Region</label>
+              <select class="form-control p-1" id="editRegionName" name="regionName" required>
+                <option value="National Capital Region (NCR)">National Capital Region (NCR)</option>
+                <option value="Ilocos Region (I)">Ilocos Region (I)</option>
+                <option value="Caraga (XIII)">Caraga (XIII)</option>
+                <option value="Cagayan Valley (II)">Cagayan Valley (II)</option>
+                <option value="Central Visayas (VII)">Central Visayas (VII)</option>
+                <option value="CALABARZON (IV-A)">CALABARZON (IV-A)</option>
+                <option value="Western Visayas (VI)">Western Visayas (VI)</option>
+                <option value="Central Luzon (III)">Central Luzon (III)</option>
+                <option value="MIMAROPA (IV-B)">MIMAROPA (IV-B)</option>
+                <option value="Bicol Region (V)">Bicol Region (V)</option>
+                <option value="Davao Region (XI)">Davao Region (XI)</option>
+                <option value="SOCCSKSARGEN (Cotabato Region) (XII)">SOCCSKSARGEN (Cotabato Region) (XII)</option>
+                <option value="Northern Mindanao (X)">Northern Mindanao (X)</option>
+                <option value="Zamboanga Peninsula (IX)">Zamboanga Peninsula (IX)</option>
+                <option value="Eastern Visayas (VIII)">Eastern Visayas (VIII)</option>
+                <option value="Cordillera Administrative Region (CAR)">Cordillera Administrative Region (CAR)</option>
+                <option value="Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)">Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" id="editApptBtn">Edit</button>
+            <button type="button" class="btn btn-secondary" id="closeEditApptBtn">Close</button>
+          </form>
+        </div>
+      </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
