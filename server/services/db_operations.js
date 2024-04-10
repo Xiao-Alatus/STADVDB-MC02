@@ -4,7 +4,7 @@ import { main_db, luzon_db, vismin_db } from './db_connections.js'
 
 // Search for an appointment in the database
 export async function searchAppointment(apptid) {
-
+    console.log("Search start")
     // Store the rows from the database
     let rows = []
     // Try main
@@ -12,9 +12,10 @@ export async function searchAppointment(apptid) {
         // Begin the search
         await syncDatabase();
         // Begin transaction
-        await startTransaction(main_db);
+        await startTransaction(main_db, 'READ COMMITTED');
+        console.log("Actual Search")
         // Sleep for 5 seconds to allow for syncing
-        await main_db.query('DO SLEEP(5);');
+        await main_db.query('DO SLEEP(1);');
         [rows] = await main_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
         // End transaction
         await endTransaction(main_db);
@@ -36,7 +37,7 @@ export async function searchAppointment(apptid) {
         try {
             await syncDatabase('luzon');
             // Begin the search
-            await startTransaction(luzon_db);
+            await startTransaction(luzon_db, 'READ COMMITTED');
             // Sleep for 5 seconds to allow for syncing
             await luzon_db.query('DO SLEEP(5);');
             // Begin the search
@@ -52,7 +53,7 @@ export async function searchAppointment(apptid) {
         try {
             await syncDatabase('vismin');
             // Begin the search
-            await startTransaction(vismin_db);
+            await startTransaction(vismin_db, 'READ COMMITTED');
             // Sleep for 5 seconds to allow for syncing
             await vismin_db.query('DO SLEEP(5);');
             // Begin the search
@@ -184,6 +185,7 @@ export async function editAppointment(form) {
             return { error: 'Appointment does not exist' };
         }
         // Check if the region is Luzon or Visayas/Mindanao
+        await main_db.query('DO SLEEP(10);');
         if (rows[0].Region === 'Luzon') {
             // Edit the appointment
             return await editDatabase('luzon', `UPDATE appointments SET pxid = '${pxid}', doctorid = '${doctorid}', status = '${status}', QueueDate = '${QueueDate}', \`type\` = '${Type}', \`Virtual\` = '${newVirtual}', hospitalname = '${hospitalname}', City = '${City}', Province = '${Province}', Region = '${Region}' WHERE apptid = '${apptid}'`);
@@ -201,6 +203,7 @@ export async function editAppointment(form) {
                 return { error: 'Appointment does not exist' };
             }
             // Check if the region is Luzon or Visayas/Mindanao
+            await main_db.query('DO SLEEP(7);');
             if (luzonRows.length > 0) {
                 // Edit the appointment
                 return await editDatabase('luzon', `UPDATE appointments SET pxid = '${pxid}', doctorid = '${doctorid}', status = '${status}', QueueDate = '${QueueDate}', \`type\` = '${Type}', \`Virtual\` = '${newVirtual}', hospitalname = '${hospitalname}', City = '${City}', Province = '${Province}', Region = '${Region}' WHERE apptid = '${apptid}'`);
@@ -220,6 +223,7 @@ export async function startTransaction(pool, isolation = 'READ COMMITTED') {
     await pool.query(`SET SESSION TRANSACTION ISOLATION LEVEL ${isolation};`)
     await pool.query(`START TRANSACTION;`)
     await pool.query(`BEGIN;`)
+    console.log(`Transaction started with isolation level ${isolation}.`)
 }
 
 export async function endTransaction(pool, status = 'COMMIT'){
@@ -305,6 +309,7 @@ export async function syncDatabase(serverlog = 'all'){
 
 //called whenever any query is executed; updates log file with the query executed
 export async function editDatabase(serverlog, query){
+    console.log("edit start")
     let statuses = await checkConnection();
     if(serverlog === 'luzon') {
         if(statuses.main_status && statuses.luzon_status){
@@ -317,6 +322,7 @@ export async function editDatabase(serverlog, query){
             // increment index
             logFileIndex++;
             //update main log file and appts
+            console.log("Actual edit")
             await startTransaction(main_db, 'SERIALIZABLE');
             await main_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`);
             await main_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
