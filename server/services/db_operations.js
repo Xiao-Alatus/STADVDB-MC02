@@ -45,6 +45,42 @@ export async function checkConnection(){
     return {main_status, luzon_status, vismin_status}
 }
 
+export async function syncDatabase(serverlog = 'all'){
+    let statuses = await checkConnection();
+    if(serverlog === 'luzon' || serverlog === 'all') {
+        if(statuses.main_status && statuses.luzon_status){
+            let oldMainIndex = await getLogFileIndex('main_luzon');
+            let oldRepIndex = await getLogFileIndex('luzon');
+            await syncLogFiles('luzon') //sync log files, then update main
+
+            //update main log file and appts
+            await startTransaction(main_db);
+            await syncApptstoLogFiles(main_db, oldMainIndex, "luzon");
+            await endTransaction(main_db);
+            //update luzon log file and appts
+            await startTransaction(luzon_db);
+            await syncApptstoLogFiles(luzon_db, oldRepIndex, "luzon");
+            await endTransaction(luzon_db);
+        }
+    }
+    if (serverlog === 'vismin' || serverlog === 'all') {
+        if(statuses.main_status && statuses.vismin_status){
+            let oldMainIndex = await getLogFileIndex('main_vismin');
+            let oldRepIndex = await getLogFileIndex('vismin');
+            await syncLogFiles('vismin') //sync log files, then update main
+
+            //update main log file and appts
+            await startTransaction(main_db);
+            await syncApptstoLogFiles(main_db, oldMainIndex, "vismin");
+            await endTransaction(main_db);
+            //update vismin log file and appts
+            await startTransaction(vismin_db);
+            await syncApptstoLogFiles(vismin_db, oldRepIndex, "vismin");
+            await endTransaction(vismin_db);
+        }
+    }
+}
+
 //called whenever any query is executed; updates log file with the query executed
 export async function editDatabase(serverlog, query){
     let statuses = await checkConnection();
@@ -93,7 +129,7 @@ export async function editDatabase(serverlog, query){
         if(statuses.main_status && statuses.vismin_status){
             let oldMainIndex = await getLogFileIndex('main_vismin');
             let oldRepIndex = await getLogFileIndex('vismin');
-            syncLogFiles('vismin') //sync log files, then update main
+            await syncLogFiles('vismin') //sync log files, then update main
 
             // get latest index on log table for vismin_db
             let logFileIndex = await getLogFileIndex('main_vismin');
