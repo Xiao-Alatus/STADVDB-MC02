@@ -46,58 +46,86 @@ export async function checkConnection(){
 }
 
 //called whenever any query is executed; updates log file with the query executed
-export async function updateLogFile(serverlog, query){
+export async function updateDatabase(serverlog, query){
     statuses = await checkConnection();
     if(serverlog === 'luzon') {
         if(statuses.main_status && statuses.luzon_status){
+            let oldMainIndex = getLogFileIndex('main_luzon');
+            let oldRepIndex = getLogFileIndex('luzon');
             syncLogFiles('luzon') //sync log files, then update main
 
             // get latest index on log table for luzon_db
-            let logFileIndex = getLogFileIndex('luzon');
+            let logFileIndex = getLogFileIndex('main_luzon');
             // increment index
             logFileIndex++;
-            //update main log file
+            //update main log file and appts
+            await startTransaction(main_db);
             await main_db.query(`INSERT INTO luzon_log (log_file_index, log_file) VALUES (${logFileIndex}, ${query})`);
-            //update luzon log file
+            await syncApptstoLogFiles(main_db, oldMainIndex, logFileIndex);
+            await endTransaction(main_db);
+            //update luzon log file and appts
+            await startTransaction(luzon_db);
             await luzon_db.query(`INSERT INTO luzon_log (log_file_index, log_file) VALUES (${logFileIndex}, ${query})`);
+            await syncApptstoLogFiles(luzon_db, oldRepIndex, logFileIndex);
+            await endTransaction(luzon_db);
         }
         else if (statuses.main_status){
             //update main log file
-            let logFileIndex = getLogFileIndex('main_luzon');
-            logFileIndex++;
+            let oldMainIndex = getLogFileIndex('main_luzon');
+            let logFileIndex = oldMainIndex + 1;
+            await startTransaction(main_db);
             await main_db.query(`INSERT INTO luzon_log (log_file_index, log_file) VALUES (${logFileIndex}, ${query})`);
+            await syncApptstoLogFiles(main_db, oldMainIndex, logFileIndex);
+            await endTransaction(main_db);
         }
         else if (statuses.luzon_status){
             //update luzon log file
-            let logFileIndex = getLogFileIndex('luzon');
-            logFileIndex++;
+            let oldRepIndex = getLogFileIndex('luzon');
+            let logFileIndex = oldRepIndex + 1;
+            await startTransaction(luzon_db);
             await luzon_db.query(`INSERT INTO luzon_log (log_file_index, log_file) VALUES (${logFileIndex}, ${query})`);
+            await syncApptstoLogFiles(luzon_db, oldRepIndex, logFileIndex);
+            await endTransaction(luzon_db);
         }
     }
     else if (serverlog === 'vismin') {
         if(statuses.main_status && statuses.vismin_status){
+            let oldMainIndex = getLogFileIndex('main_vismin');
+            let oldRepIndex = getLogFileIndex('vismin');
             syncLogFiles('vismin') //sync log files, then update main
-            
+
             // get latest index on log table for vismin_db
-            let logFileIndex = getLogFileIndex('vismin');
+            let logFileIndex = getLogFileIndex('main_vismin');
             // increment index
             logFileIndex++;
-            //update main log file
+            //update main log file and appts
+            await startTransaction(main_db);
             await main_db.query(`INSERT INTO vismin_log (log_file_index, log_file) VALUES (${logFileIndex}, ${query})`);
-            //update vismin log file
+            await syncApptstoLogFiles(main_db, oldMainIndex, logFileIndex);
+            await endTransaction(main_db);
+            //update vismin log file and appts
+            await startTransaction(vismin_db);
             await vismin_db.query(`INSERT INTO vismin_log (log_file_index, log_file) VALUES (${logFileIndex}, ${query})`);
+            await syncApptstoLogFiles(vismin_db, oldRepIndex, logFileIndex);
+            await endTransaction(vismin_db);
         }
         else if (statuses.main_status){
             //update main log file
-            let logFileIndex = getLogFileIndex('main_vismin');
-            logFileIndex++;
+            let oldMainIndex = getLogFileIndex('main_vismin');
+            let logFileIndex = oldMainIndex + 1;
+            await startTransaction(main_db);
             await main_db.query(`INSERT INTO vismin_log (log_file_index, log_file) VALUES (${logFileIndex}, ${query})`);
+            await syncApptstoLogFiles(main_db, oldMainIndex, logFileIndex);
+            await endTransaction(main_db);
         }
         else if (statuses.vismin_status){
             //update vismin log file
-            let logFileIndex = getLogFileIndex('vismin');
-            logFileIndex++;
+            let oldRepIndex = getLogFileIndex('vismin');
+            let logFileIndex = oldRepIndex + 1;
+            await startTransaction(vismin_db);
             await vismin_db.query(`INSERT INTO vismin_log (log_file_index, log_file) VALUES (${logFileIndex}, ${query})`);
+            await syncApptstoLogFiles(vismin_db, oldRepIndex, logFileIndex);
+            await endTransaction(vismin_db);
         }
     }
 }
@@ -243,13 +271,14 @@ export async function syncLogFiles(choice = "all"){
     }
 }
 
-export async function syncDBtoLogFiles(){
-    //check 
+//executes all queries in log files that havent been done yet
+export async function syncApptstoLogFiles(pool, prev_index, new_index){
+    
 }
 
 export default {
     checkConnection,
     syncLogFiles,
-    syncDBtoLogFiles,
+    syncApptstoLogFiles,
     getLogFileIndex
 }
