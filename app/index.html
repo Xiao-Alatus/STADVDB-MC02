@@ -20,41 +20,61 @@
         <div class="h3 my-3 py-2">View Appointments</div>
         <!-- Search Bar -->
         <div class="input-group rounded">
-          <input type="search" class="form-control rounded" placeholder="Find Appointment ID" aria-label="Search" aria-describedby="searchBtn" id="searchInput">
-          <button class="btn border btn-light" type="button" id="searchBtn"><i class="bi bi-search"></i></button>
+          <input type="search" class="form-control rounded" placeholder="Find by Appointment ID" aria-label="Search" aria-describedby="searchBtn" id="searchInput" maxlength="32">
+          <button class="btn border btn-dark" type="button" id="searchBtn"><i class="bi bi-search"></i></button>
         </div>
+        <p id="error-message-search" class="error-message m-0 p-0 mt-1">Appointment ID must be 32 hexadecimal characters</p>
         <!-- CRUD Options -->
         <button class="btn btn-primary my-3" id="createBtn">Add Appointment</button>
         <!-- Search Results -->
         <div class="border py-3 my-1">
-          <div class="h5 ml-3">Appointment Records Searched</div>
+          <div class="h5 ml-3">Records Preview:</div>
           <div id="sql-table-container" class="table-responsive d-flex">
             <table id="resultTable" class="table table-striped table-bordered mx-3 my-2">
               <thead>
                 <tr>
                   <th scope="col">Appointment ID</th>
+                  <th scope="col">Patient ID</th>
+                  <th scope="col">Doctor ID</th>
                   <th scope="col">Status</th>
+                  <th scope="col">Queue Date</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Virtual</th>
+                  <th scope="col">Hospital Name</th>
                   <th scope="col">City</th>
                   <th scope="col">Province</th>
-                  <th scope="col">Region</th>
                   <th scope="col"></th>
                   <th scope="col"></th>
                 </tr>
+              </thead>
             </table>
-            <div id="query-load-spinner" class="justify-content-center mt-4" style="display:none;"><div class="spinner-border text-primary d-flex"><span class="sr-only">Executing query...</span></div></div>
           </div>
+          <div id="query-load-spinner" class="justify-content-center mt-3" style="display:none;"><div class="spinner-border text-primary d-flex"><span class="sr-only">Executing query...</span></div></div>
+          <!-- Search Information -->
+          <div id="resultsCount" class="mx-4"></div>
         </div>
     </div>
     <!-- Add Appointment Modal -->
     <div id="add-appointment-modal-container">
-      <div class="add-appointment-modal d-flex h-100 justify-content-center align-items-center">
+      <div class="add-appointment-modal d-flex my-4 justify-content-center align-items-center">
         <div class="bg-light w-75 p-4 rounded">
           <div class="h5 mb-3">Add Appointment</div>
+          <div id="query-load-spinner-add" class="justify-content-center mt-3" style="display:none;"><div class="spinner-border text-primary d-flex"><span class="sr-only">Executing query...</span></div></div>
           <form id="add-appointment-form">
             <div class="form-group m-0">
-              <label for="appointmentID">Appointment ID</label>
+              <label for="appointmentID">Appointment ID<span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="appointmentID" name="apptid" placeholder="AAAABBBBCCCCDDDDAAAABBBBCCCCDDDD" maxlength="32" required>
-              <p id="error-message" class="error-message m-0 p-0 mt-1">Appointment ID must be 32 hexadecimal characters</p>
+              <p id="error-message-appt" class="error-message m-0 p-0 mt-1">Appointment ID must be 32 hexadecimal characters</p>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="patientID">Patient ID</label>
+              <input type="text" class="form-control" id="patientID" name="pxid" placeholder="AAAABBBBCCCCDDDDAAAABBBBCCCCDDDD" maxlength="32">
+              <p id="error-message-px" class="error-message m-0 p-0 mt-1">Patient ID must be 32 hexadecimal characters</p>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="doctorID">Doctor ID</label>
+              <input type="text" class="form-control" id="doctorID" name="doctorid" placeholder="AAAABBBBCCCCDDDDAAAABBBBCCCCDDDD" maxlength="32">
+              <p id="error-message-doc" class="error-message m-0 p-0 mt-1">Doctor ID must be 32 hexadecimal characters</p>
             </div>
             <div class="form-group m-0 my-1">
               <label for="status">Status</label>
@@ -68,33 +88,40 @@
               </select>
             </div>
             <div class="form-group m-0 my-1">
-              <label for="city">City</label>
-              <input type="text" class="form-control" id="city" name="city">
+              <label for="QueueDate">Queue Date<span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="QueueDate" name="QueueDate" required>
             </div>
             <div class="form-group m-0 my-1">
-              <label for="province">Province</label>
-              <input type="text" class="form-control" id="province" name="province">
+              <label for="Type">Type</label>
+              <select class="form-control p-1" id="Type" name="Type" required>
+                <option value="Consultation">Consultation</option>
+                <option value="Inpatient">Inpatient</option>
+              </select>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="Virtual">Virtual</label>
+              <select class="form-control p-1" id="Virtual" name="Virtual" required>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="hospitalname">Hospital Name</label>
+              <input type="text" class="form-control" id="hospitalname" name="hospitalname">
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="City">City</label>
+              <input type="text" class="form-control" id="City" name="City">
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="Province">Province</label>
+              <input type="text" class="form-control" id="Province" name="Province">
             </div>
             <div class="form-group mb-3">
-              <label for="status">Region</label>
-              <select class="form-control p-1" id="regionName" name="regionName" required>
-                <option value="National Capital Region (NCR)">National Capital Region (NCR)</option>
-                <option value="Ilocos Region (I)">Ilocos Region (I)</option>
-                <option value="Caraga (XIII)">Caraga (XIII)</option>
-                <option value="Cagayan Valley (II)">Cagayan Valley (II)</option>
-                <option value="Central Visayas (VII)">Central Visayas (VII)</option>
-                <option value="CALABARZON (IV-A)">CALABARZON (IV-A)</option>
-                <option value="Western Visayas (VI)">Western Visayas (VI)</option>
-                <option value="Central Luzon (III)">Central Luzon (III)</option>
-                <option value="MIMAROPA (IV-B)">MIMAROPA (IV-B)</option>
-                <option value="Bicol Region (V)">Bicol Region (V)</option>
-                <option value="Davao Region (XI)">Davao Region (XI)</option>
-                <option value="SOCCSKSARGEN (Cotabato Region) (XII)">SOCCSKSARGEN (Cotabato Region) (XII)</option>
-                <option value="Northern Mindanao (X)">Northern Mindanao (X)</option>
-                <option value="Zamboanga Peninsula (IX)">Zamboanga Peninsula (IX)</option>
-                <option value="Eastern Visayas (VIII)">Eastern Visayas (VIII)</option>
-                <option value="Cordillera Administrative Region (CAR)">Cordillera Administrative Region (CAR)</option>
-                <option value="Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)">Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)</option>
+              <label for="Region">Region<span class="text-danger">*</span></label>
+              <select class="form-control p-1" id="Region" name="Region" required>
+                <option value="Luzon">Luzon</option>
+                <option value="Visayas/Mindanao">Visayas/Mindanao</option>
               </select>
             </div>
             <button type="submit" class="btn btn-primary" id="addApptBtn">Add</button>
@@ -105,17 +132,26 @@
     </div>
     <!-- Edit Appointment Modal -->
     <div id="edit-appointment-modal-container">
-      <div class="edit-appointment-modal d-flex h-100 justify-content-center align-items-center">
+      <div class="edit-appointment-modal d-flex my-4 justify-content-center align-items-center">
         <div class="bg-light w-75 p-4 rounded">
           <div class="h5 mb-3">Edit Appointment</div>
+          <div id="query-load-spinner-edit" class="justify-content-center mt-3" style="display:none;"><div class="spinner-border text-primary d-flex"><span class="sr-only">Executing query...</span></div></div>
           <form id="edit-appointment-form">
             <div class="form-group m-0">
-              <label for="appointmentID">Appointment ID</label>
-              <input type="text" class="form-control" id="editAppointmentID" name="apptid" readonly>
+              <label for="editAppointmentID">Appointment ID</label>
+              <input type="text" class="form-control" id="editAppointmentID" name="editapptid" readonly>
             </div>
             <div class="form-group m-0 my-1">
-              <label for="status">Status</label>
-              <select class="form-control p-1" id="editStatus" name="status" required>
+              <label for="editPatientID">Patient ID</label>
+              <input type="text" class="form-control" id="editPatientID" name="editpxid" readonly>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="editDoctorID">Doctor ID</label>
+              <input type="text" class="form-control" id="editDoctorID" name="editdoctorid" readonly>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="editStatus">Status</label>
+              <select class="form-control p-1" id="editStatus" name="editstatus" required>
                     <option value="Complete">Complete</option>
                     <option value="Queued">Queued</option>
                     <option value="Cancel">Cancel</option>
@@ -125,34 +161,34 @@
               </select>
             </div>
             <div class="form-group m-0 my-1">
-              <label for="city">City</label>
-              <input type="text" class="form-control" id="editCity" name="city">
+              <label for="editQueueDate">Queue Date<span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="editQueueDate" name="editQueueDate" required>
             </div>
             <div class="form-group m-0 my-1">
-              <label for="province">Province</label>
-              <input type="text" class="form-control" id="editProvince" name="province">
+              <label for="editType">Type</label>
+              <select class="form-control p-1" id="editType" name="editType" required>
+                <option value="Consultation">Consultation</option>
+                <option value="Inpatient">Inpatient</option>
+              </select>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="editVirtual">Virtual</label>
+              <select class="form-control p-1" id="editVirtual" name="editVirtual" required>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="editHospitalname">Hospital Name</label>
+              <input type="text" class="form-control" id="editHospitalname" name="edithospitalname">
+            </div>
+            <div class="form-group m-0 my-1">
+              <label for="editCity">City</label>
+              <input type="text" class="form-control" id="editCity" name="editCity">
             </div>
             <div class="form-group mb-3">
-              <label for="status">Region</label>
-              <select class="form-control p-1" id="editRegionName" name="regionName" required>
-                <option value="National Capital Region (NCR)">National Capital Region (NCR)</option>
-                <option value="Ilocos Region (I)">Ilocos Region (I)</option>
-                <option value="Caraga (XIII)">Caraga (XIII)</option>
-                <option value="Cagayan Valley (II)">Cagayan Valley (II)</option>
-                <option value="Central Visayas (VII)">Central Visayas (VII)</option>
-                <option value="CALABARZON (IV-A)">CALABARZON (IV-A)</option>
-                <option value="Western Visayas (VI)">Western Visayas (VI)</option>
-                <option value="Central Luzon (III)">Central Luzon (III)</option>
-                <option value="MIMAROPA (IV-B)">MIMAROPA (IV-B)</option>
-                <option value="Bicol Region (V)">Bicol Region (V)</option>
-                <option value="Davao Region (XI)">Davao Region (XI)</option>
-                <option value="SOCCSKSARGEN (Cotabato Region) (XII)">SOCCSKSARGEN (Cotabato Region) (XII)</option>
-                <option value="Northern Mindanao (X)">Northern Mindanao (X)</option>
-                <option value="Zamboanga Peninsula (IX)">Zamboanga Peninsula (IX)</option>
-                <option value="Eastern Visayas (VIII)">Eastern Visayas (VIII)</option>
-                <option value="Cordillera Administrative Region (CAR)">Cordillera Administrative Region (CAR)</option>
-                <option value="Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)">Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)</option>
-              </select>
+              <label for="editProvince">Province</label>
+              <input type="text" class="form-control" id="editProvince" name="editProvince">
             </div>
             <button type="submit" class="btn btn-primary" id="editApptBtn">Edit</button>
             <button type="button" class="btn btn-secondary" id="closeEditApptBtn">Close</button>
