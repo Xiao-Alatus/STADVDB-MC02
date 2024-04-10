@@ -161,7 +161,7 @@ router.get("/index", async (req, res) => {
 })
 
 router.get("/update", async (req, res) => {
-    await database.updateDatabase('luzon', "INSERT INTO appointments (apptid) VALUES (1006);");
+    await database.editDatabase('luzon', "INSERT INTO appointments (apptid) VALUES (1006);");
     res.status(200).send("finish");
 })
 

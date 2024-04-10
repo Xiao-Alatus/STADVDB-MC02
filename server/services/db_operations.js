@@ -46,7 +46,7 @@ export async function checkConnection(){
 }
 
 //called whenever any query is executed; updates log file with the query executed
-export async function updateDatabase(serverlog, query){
+export async function editDatabase(serverlog, query){
     let statuses = await checkConnection();
     if(serverlog === 'luzon') {
         if(statuses.main_status && statuses.luzon_status){
@@ -295,7 +295,7 @@ export async function syncApptstoLogFiles(pool, prev_index, table_name){
 }
 
 export default {
-    updateDatabase,
+    editDatabase,
     checkConnection,
     syncLogFiles,
     syncApptstoLogFiles,
