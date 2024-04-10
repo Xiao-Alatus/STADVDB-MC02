@@ -2,6 +2,12 @@ import mysql from 'mysql2'
 
 import { main_db, luzon_db, vismin_db } from './db_connections.js'
 
+// Modified executeSQL function to handle transactions with an array of SQL statements 
+export function executeSQL(pool, sqlStatements) {
+    pool.query(`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`)
+    pool.query(`START TRANSACTION;`)
+}
+
 export async function checkConnection(){
     let main_status = false;
     let luzon_status = false;
@@ -93,17 +99,25 @@ export async function updateLogFile(serverlog, query){
 
 //get latest index on log table for a specific server
 export async function getLogFileIndex(serverlog){
-    let logFileIndex = null;
-    if (serverlog === 'main_luzon') {
-        logFileIndex = await main_db.query('SELECT id FROM luzon_log ORDER BY id DESC LIMIT 1');
-    } else if (serverlog === 'main_vismin') {
-        logFileIndex = await main_db.query('SELECT id FROM vismin_log ORDER BY id DESC LIMIT 1');
-    } else if (serverlog === 'luzon') {
-        logFileIndex = await main_db.query('SELECT id FROM luzon_log ORDER BY id DESC LIMIT 1');
-    } else if (serverlog === 'vismin') {
-        logFileIndex = await main_db.query('SELECT id FROM vismin_log ORDER BY id DESC LIMIT 1');
+    statuses = checkConnection();
+    try{
+        if (serverlog === 'main_luzon' && statuses.main_status) {
+            const [[result]] = await main_db.query('SELECT id FROM luzon_log ORDER BY id DESC LIMIT 1');
+            return result.id;
+        } else if (serverlog === 'main_vismin' && statuses.main_status) {
+            const [[result]] = await main_db.query('SELECT id FROM vismin_log ORDER BY id DESC LIMIT 1');
+            return result.id;
+        } else if (serverlog === 'luzon' && statuses.luzon_status) {
+            const [[result]] = await luzon_db.query('SELECT id FROM luzon_log ORDER BY id DESC LIMIT 1');
+            return result.id;
+        } else if (serverlog === 'vismin' && statuses.vismin_status) {
+            const [[result]] = await vismin_db.query('SELECT id FROM vismin_log ORDER BY id DESC LIMIT 1');
+            return result.id;
+        }
+    } catch(err){
+        console.error(`Error getting log file index: ${err.message}`);
+        return -1;
     }
-    return logFileIndex[0].log_file_index;
 }
 
 export async function syncLogFiles(choice = "all"){
@@ -200,5 +214,6 @@ export async function syncDBtoLogFiles(){
 export default {
     checkConnection,
     syncLogFiles,
-    syncDBtoLogFiles
+    syncDBtoLogFiles,
+    getLogFileIndex
 }
