@@ -1,14 +1,19 @@
-const express = require("express");
+import express from "express";
+import mysql from "mysql2";
+import path from "path";
+import { fileURLToPath } from 'url';
+import database from "./services/db_operations.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const router = express.Router();
-const mysql = require("mysql");
-const path = require("path");
 
 // MySQL connection
 const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "12345",
-    database: "apptdb_luzon",
+    password: "password",
+    database: "apptdb",
     port: 3306
 });
 
@@ -137,5 +142,10 @@ router.post("/edit", async (req, res) => {
 });
 
 
+router.get("/ping", async (req, res) => {
+    const status = await database.checkConnection();
+    res.status(200).send(status);
+});
 
-module.exports = router;
+
+export default router;

@@ -1,0 +1,2 @@
+# Test Ping
+GET http://localhost:3000/ping HTTP/1.1
