@@ -28,6 +28,8 @@ router.post("/add", async (req, res) => {
     res.json(result.error);
 });
 
+// Delete
+
 // // DELETE
 // router.post("/delete", async (req, res) => {
 //     try {
