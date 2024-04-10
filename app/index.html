@@ -43,6 +43,7 @@
                   <th scope="col">Hospital Name</th>
                   <th scope="col">City</th>
                   <th scope="col">Province</th>
+                  <th scope="col">Region</th>
                   <th scope="col"></th>
                   <th scope="col"></th>
                 </tr>
@@ -186,9 +187,13 @@
               <label for="editCity">City</label>
               <input type="text" class="form-control" id="editCity" name="editCity">
             </div>
-            <div class="form-group mb-3">
+            <div class="form-group m-0 my-1">
               <label for="editProvince">Province</label>
               <input type="text" class="form-control" id="editProvince" name="editProvince">
+            </div>
+            <div class="form-group mb-3">
+              <label for="editRegion">Region<span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="editRegion" name="editRegion" readonly>
             </div>
             <button type="submit" class="btn btn-primary" id="editApptBtn">Edit</button>
             <button type="button" class="btn btn-secondary" id="closeEditApptBtn">Close</button>

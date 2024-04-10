@@ -151,6 +151,51 @@ export async function deleteAppointment(apptid) {
     }
 }
 
+// Edit an appointment in the database
+export async function editAppointment(form) {
+    // For boolean values, 1 is true and 0 is false
+    const newVirtual = form.Virtual ? 1 : 0;
+    // Extract the date from the QueueDate string
+    const { apptid, pxid, doctorid, status, QueueDate, Type, Virtual, hospitalname, City, Province, Region } = form;
+
+    // Try main
+    try {
+        // Check if it exists
+        const [rows] = await main_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+        if (rows.length === 0) {
+            return { error: 'Appointment does not exist' };
+        }
+        // Check if the region is Luzon or Visayas/Mindanao
+        if (rows[0].Region === 'Luzon') {
+            // Edit the appointment
+            return await editDatabase('luzon', `UPDATE appointments SET pxid = '${pxid}', doctorid = '${doctorid}', status = '${status}', QueueDate = '${QueueDate}', \`type\` = '${Type}', \`Virtual\` = '${newVirtual}', hospitalname = '${hospitalname}', City = '${City}', Province = '${Province}', Region = '${Region}' WHERE apptid = '${apptid}'`);
+        } else if (rows[0].Region === 'Visayas/Mindanao') {
+            // Edit the appointment
+            return await editDatabase('vismin', `UPDATE appointments SET pxid = '${pxid}', doctorid = '${doctorid}', status = '${status}', QueueDate = '${QueueDate}', \`type\` = '${Type}', \`Virtual\` = '${newVirtual}', hospitalname = '${hospitalname}', City = '${City}', Province = '${Province}', Region = '${Region}' WHERE apptid = '${apptid}'`);
+        }
+    // If main fails, try luzon and vismin
+    } catch {
+        try {
+            // Check if it exists
+            const [luzonRows] = await luzon_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+            const [visminRows] = await vismin_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+            if (luzonRows.length === 0 && visminRows.length === 0) {
+                return { error: 'Appointment does not exist' };
+            }
+            // Check if the region is Luzon or Visayas/Mindanao
+            if (luzonRows.length > 0) {
+                // Edit the appointment
+                return await editDatabase('luzon', `UPDATE appointments SET pxid = '${pxid}', doctorid = '${doctorid}', status = '${status}', QueueDate = '${QueueDate}', \`type\` = '${Type}', \`Virtual\` = '${newVirtual}', hospitalname = '${hospitalname}', City = '${City}', Province = '${Province}', Region = '${Region}' WHERE apptid = '${apptid}'`);
+            } else if (visminRows.length > 0) {
+                // Edit the appointment
+                return await editDatabase('vismin', `UPDATE appointments SET pxid = '${pxid}', doctorid = '${doctorid}', status = '${status}', QueueDate = '${QueueDate}', \`type\` = '${Type}', \`Virtual\` = '${newVirtual}', hospitalname = '${hospitalname}', City = '${City}', Province = '${Province}', Region = '${Region}' WHERE apptid = '${apptid}'`);
+            }
+        } catch (error) {
+            console.log("Error in main: " + error);
+            return { error: 'Error editing appointment' };
+        }
+    }
+}
 
 // Modified executeSQL function to handle transactions with an array of SQL statements 
 export async function startTransaction(pool, isolation = 'READ COMMITTED') {
@@ -488,5 +533,6 @@ export default {
     getLogFileIndex,
     searchAppointment,
     addAppointment,
-    deleteAppointment
+    deleteAppointment,
+    editAppointment
 }

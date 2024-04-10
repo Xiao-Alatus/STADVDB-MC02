@@ -35,24 +35,12 @@ router.post("/delete", async (req, res) => {
     res.json(result);
 });
 
-// // EDIT
-// router.post("/edit", async (req, res) => {
-//     try {
-//         // For boolean values, 1 is true and 0 is false
-//         const newVirtual = req.body.Virtual ? 1 : 0;
-//         // Extract the date from the QueueDate string
-//         const { apptid, pxid, doctorid, status, QueueDate, Type, Virtual, hospitalname, City, Province } = req.body;
-//         const sqlStatements = [
-//             `UPDATE appointments SET status = '${status}', QueueDate = '${QueueDate}', \`type\` = '${Type}', \`Virtual\` = '${newVirtual}', hospitalname = '${hospitalname}', City = '${City}', Province = '${Province}' WHERE apptid = '${apptid}'`
-//         ];
-//         const result = await executeSQL(sqlStatements);
-//         res.json(result);
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ error: error.message });
-//     }
-// });
-
+// Edit 
+router.post("/edit", async (req, res) => {
+    const result = await database.editAppointment(req.body);
+    console.log(result);
+    res.json(result);
+});
 
 router.get("/ping", async (req, res) => {
     const status = await database.checkConnection();

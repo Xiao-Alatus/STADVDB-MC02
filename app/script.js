@@ -57,24 +57,22 @@ searchBtn.addEventListener('click', async function() {
             const newRow = table.insertRow();
             // Insert cells
             Object.keys(searchResults[i]).forEach((key, index) => {
-                if (key != 'Region') {
-                    const newCell = newRow.insertCell();
-                    newCell.textContent = searchResults[i][key];
+                const newCell = newRow.insertCell();
+                newCell.textContent = searchResults[i][key];
 
-                    // If QueueDate, make it a date
-                    if (key == 'QueueDate') {
-                        newCell.textContent = new Date(searchResults[i][key]).toLocaleDateString();
-                    }
+                // If QueueDate, make it a date
+                if (key == 'QueueDate') {
+                    newCell.textContent = new Date(searchResults[i][key]).toLocaleDateString();
+                }
 
-                    // If Virtual, make it show Yes or No
-                    if (key == 'Virtual') {
-                        if (searchResults[i][key] == 1) {
-                            newCell.textContent = 'Yes';
-                        } else {
-                            newCell.textContent = 'No';
-                        }
+                // If Virtual, make it show Yes or No
+                if (key == 'Virtual') {
+                    if (searchResults[i][key] == 1) {
+                        newCell.textContent = 'Yes';
+                    } else {
+                        newCell.textContent = 'No';
                     }
-                }   
+                }
             });
 
             // Insert a delete and edit button
@@ -111,7 +109,7 @@ searchBtn.addEventListener('click', async function() {
         const newRow = table.insertRow();
         const newCell = newRow.insertCell();
         newCell.textContent = 'No results found.';
-        for (i = 0; i < 11; i++) {
+        for (i = 0; i < 12; i++) {
             newRow.insertCell();
         }
     }
@@ -256,6 +254,7 @@ const editEventListener = async (e) => {
     document.getElementById('editHospitalname').value = cells[7].textContent;
     document.getElementById('editCity').value = cells[8].textContent;
     document.getElementById('editProvince').value = cells[9].textContent;
+    document.getElementById('editRegion').value = cells[10].textContent;
     document.getElementById('edit-appointment-modal-container').style.display = 'block';
 }
 
@@ -291,7 +290,7 @@ document.getElementById('edit-appointment-form').addEventListener('submit', asyn
     document.getElementById('edit-appointment-form').style.display = 'block';
     document.getElementById('edit-appointment-modal-container').style.display = 'none';
 
-    if (response.status == 200) {
+    if (!response.error) {
         window.alert('Appointment edited successfully!');
         // Search for appointments
         document.getElementById('searchInput').value = data.apptid;
