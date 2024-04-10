@@ -3,9 +3,15 @@ import mysql from 'mysql2'
 import { main_db, luzon_db, vismin_db } from './db_connections.js'
 
 // Modified executeSQL function to handle transactions with an array of SQL statements 
-export function executeSQL(pool, sqlStatements) {
-    pool.query(`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`)
-    pool.query(`START TRANSACTION;`)
+export async function startTransaction(pool, isolation = 'READ COMMITTED') {
+    await pool.query(`SET SESSION TRANSACTION ISOLATION LEVEL ${isolation};`)
+    await pool.query(`START TRANSACTION;`)
+    await pool.query(`BEGIN;`)
+}
+
+export async function endTransaction(pool, status = 'COMMIT'){
+    await pool.query(`${status};`)
+    await pool.query(`END;`)
 }
 
 export async function checkConnection(){
@@ -128,34 +134,23 @@ export async function syncLogFiles(choice = "all"){
     if (statuses.main_status){
         //if luzon_db is up, sync luzon_db log file and main_db luzon log file
         if (statuses.luzon_status && (choice === "all" || choice === "luzon")){
-            //sync luzon_db log file and main_db luzon log file
-            let luzon_log_index = null;
-            let main_luzon_log_index = null;
-            let rows = [];
-            
+            //sync luzon_db log file and main_db luzon log file            
             // Get latest index on log table for luzon_db and main_db
-            [rows] = getLogFileIndex('luzon');
-            if (rows.length === 0){
-                luzon_log_index = 0;
-            } else if (rows.length === 1) {
-                luzon_log_index = rows[0].id;
-            }
-            [rows] = getLogFileIndex('main_luzon');
-            if (rows.length === 0){
-                main_luzon_log_index = 0;
-            } else if (rows.length === 1) {
-                main_luzon_log_index = rows[0].id;
-            }
+            let luzon_log_index = getLogFileIndex('luzon');
+            let main_luzon_log_index = getLogFileIndex('main_luzon');
+            let rows = [];
 
             // If not sync, sync log files
             if (luzon_log_index !== main_luzon_log_index){
                 //sync log files from whoever has a higher index
                 if (luzon_log_index > main_luzon_log_index){
+                    startTransaction(main_db)
                     // select the luzon_db log file and insert it into main_db luzon log file
                     [rows] = await luzon_db.query(`SELECT * FROM luzon_log WHERE id > ${main_luzon_log_index}`);
                     for (let i = 0; i < rows.length; i++){
                         [rows] = await main_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${rows[i].id}, ${rows[i].log_entry})`);
                     }
+                    endTransaction(main_db)
                 } else {
                     //sync main_db luzon log file to luzon_db log file
                     [rows] = await main_db.query(`SELECT * FROM luzon_log WHERE id > ${luzon_log_index}`);
@@ -163,6 +158,10 @@ export async function syncLogFiles(choice = "all"){
                         [rows] = await luzon_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${rows[i].id}, ${rows[i].log_entry})`);
                     }
                 }
+            }
+            else {
+                console.log("Log files are already in sync.");
+            
             }
         }
         //if vismin_db is up, sync vismin_db log file and main_db vismin log file
