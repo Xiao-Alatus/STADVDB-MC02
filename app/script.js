@@ -44,8 +44,10 @@ searchBtn.addEventListener('click', async function() {
     // Update number of results
     if (searchResults.length > 1) {
         document.getElementById('resultsCount').innerHTML = `${searchResults.length} records found.`;
-    } else {
+    } else if (searchResults.length == 1) {
         document.getElementById('resultsCount').innerHTML = `${searchResults.length} record found.`;
+    } else {
+        document.getElementById('resultsCount').innerHTML = '';
     }
     const table = document.getElementById('resultTable');
 
@@ -195,7 +197,7 @@ document.getElementById('add-appointment-form').addEventListener('submit', async
     document.getElementById('add-appointment-form').style.display = 'block';
     document.getElementById('add-appointment-modal-container').style.display = 'none';
 
-    if (!response) {
+    if (!response.error) {
         window.alert('Appointment added successfully!');
         document.getElementById('searchInput').value = data.apptid;
         searchBtn.click();
@@ -226,7 +228,7 @@ const deleteEventListener = async (e) => {
 
     // Kill the spinner
     document.getElementById('query-load-spinner').style.display = 'none';
-    if (response.status == 200) {
+    if (!response.error) {
         window.alert('Appointment deleted successfully!');
         searchBtn.click();
     } else {

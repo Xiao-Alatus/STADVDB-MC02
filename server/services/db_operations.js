@@ -110,6 +110,47 @@ export async function addAppointment(form) {
     }
 }
 
+// Delete an appointment from the database
+export async function deleteAppointment(apptid) {
+    // Try main
+    try {
+        // Check if it exists
+        const [rows] = await main_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+        if (rows.length === 0) {
+            return { error: 'Appointment does not exist' };
+        }
+        // Check if the region is Luzon or Visayas/Mindanao
+        if (rows[0].Region === 'Luzon') {
+            // Delete the appointment
+            return await editDatabase('luzon', `DELETE FROM appointments WHERE apptid = '${apptid}'`);
+        } else if (rows[0].Region === 'Visayas/Mindanao') {
+            // Delete the appointment
+            return await editDatabase('vismin', `DELETE FROM appointments WHERE apptid = '${apptid}'`);
+        }
+    // If main fails, try luzon and vismin
+    } catch {
+        try {
+            // Check if it exists
+            const [luzonRows] = await luzon_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+            const [visminRows] = await vismin_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+            if (luzonRows.length === 0 && visminRows.length === 0) {
+                return { error: 'Appointment does not exist' };
+            }
+            // Check if the region is Luzon or Visayas/Mindanao
+            if (luzonRows.length > 0) {
+                // Delete the appointment
+                return await editDatabase('luzon', `DELETE FROM appointments WHERE apptid = '${apptid}'`);
+            } else if (visminRows.length > 0) {
+                // Delete the appointment
+                return await editDatabase('vismin', `DELETE FROM appointments WHERE apptid = '${apptid}'`);
+            }
+        } catch (error) {
+            console.log("Error in main: " + error);
+            return { error: 'Error deleting appointment' };
+        }
+    }
+}
+
 
 // Modified executeSQL function to handle transactions with an array of SQL statements 
 export async function startTransaction(pool, isolation = 'READ COMMITTED') {
@@ -446,5 +487,6 @@ export default {
     syncApptstoLogFiles,
     getLogFileIndex,
     searchAppointment,
-    addAppointment
+    addAppointment,
+    deleteAppointment
 }

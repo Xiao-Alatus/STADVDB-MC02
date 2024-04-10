@@ -24,27 +24,16 @@ router.post("/search", async (req, res) => {
 // Add
 router.post("/add", async (req, res) => {
     const result = await database.addAppointment(req.body);
-    console.log(result.error);
-    res.json(result.error);
+    console.log(result);
+    res.json(result);
 });
 
 // Delete
-
-// // DELETE
-// router.post("/delete", async (req, res) => {
-//     try {
-//         const appointmentID = req.body.searchInput; 
-//         const sqlStatements = [
-//             `DELETE FROM appointments WHERE apptid = '${appointmentID}'`
-//         ];
-//         await executeSQL(sqlStatements);
-//         res.status(200).send('Appointment deleted successfully');
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ error: error.message });
-//     }
-// });
-
+router.post("/delete", async (req, res) => {
+    const result = await database.deleteAppointment(req.body.searchInput);
+    console.log(result);
+    res.json(result);
+});
 
 // // EDIT
 // router.post("/edit", async (req, res) => {
