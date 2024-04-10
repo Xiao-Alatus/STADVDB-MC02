@@ -36,13 +36,38 @@ export async function checkConnection(){
 
 //called whenever any query is executed; updates log file with the query executed
 export async function updateLogFile(serverlog){
-    //sync log files
-    syncLogFiles(serverlog)
+    statuses = checkConnection();
     if(serverlog === 'luzon') {
+        if(statuses.main_status && statuses.luzon_status){
+            syncLogFiles('luzon') //sync log files, then update main
+            
+            //update main log file
+
+            //update luzon log file
+        }
+        else if (statuses.main_status){
+            //update main log file
+        }
+        else if (statuses.luzon_status){
+            //update luzon log file
         
+        }
     }
     else if (serverlog === 'vismin') {
+        if(statuses.main_status && statuses.vismin_status){
+            syncLogFiles('luzon') //sync log files, then update main
+            
+            //update main log file
 
+            //update vismin log file
+        }
+        else if (statuses.main_status){
+            //update main log file
+        }
+        else if (statuses.vismin_status){
+            //update vismin log file
+        
+        }
     }
 }
 
