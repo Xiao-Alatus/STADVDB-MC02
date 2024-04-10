@@ -3,8 +3,12 @@ GET http://localhost:3000/ping HTTP/1.1
 
 ###
 # Test sync log files call
-GET http://localhost:3000/sync/vismin HTTP/1.1
+GET http://localhost:3000/sync/luzon HTTP/1.1
 
 ###
 # Test sync log files call
 GET http://localhost:3000/index HTTP/1.1
+
+###
+# Test Update Database
+GET http://localhost:3000/update HTTP/1.1
