@@ -11,7 +11,6 @@ export async function startTransaction(pool, isolation = 'READ COMMITTED') {
 
 export async function endTransaction(pool, status = 'COMMIT'){
     await pool.query(`${status};`)
-    await pool.query(`END;`)
 }
 
 export async function checkConnection(){
@@ -48,7 +47,7 @@ export async function checkConnection(){
 
 //called whenever any query is executed; updates log file with the query executed
 export async function updateLogFile(serverlog, query){
-    statuses = checkConnection();
+    statuses = await checkConnection();
     if(serverlog === 'luzon') {
         if(statuses.main_status && statuses.luzon_status){
             syncLogFiles('luzon') //sync log files, then update main
@@ -105,7 +104,7 @@ export async function updateLogFile(serverlog, query){
 
 //get latest index on log table for a specific server
 export async function getLogFileIndex(serverlog){
-    statuses = checkConnection();
+    let statuses = await checkConnection();
     try{
         if (serverlog === 'main_luzon' && statuses.main_status) {
             const [[result]] = await main_db.query('SELECT id FROM luzon_log ORDER BY id DESC LIMIT 1');
@@ -136,71 +135,109 @@ export async function syncLogFiles(choice = "all"){
         if (statuses.luzon_status && (choice === "all" || choice === "luzon")){
             //sync luzon_db log file and main_db luzon log file            
             // Get latest index on log table for luzon_db and main_db
-            let luzon_log_index = getLogFileIndex('luzon');
-            let main_luzon_log_index = getLogFileIndex('main_luzon');
+            let luzon_log_index = await getLogFileIndex('luzon');
+            let main_luzon_log_index = await getLogFileIndex('main_luzon');
+            console.log(`luzon_log_index: ${luzon_log_index}`);
+            console.log(`main_luzon_log_index: ${main_luzon_log_index}`)
             let rows = [];
 
             // If not sync, sync log files
             if (luzon_log_index !== main_luzon_log_index){
+                console.log("Log files are not in sync.")
                 //sync log files from whoever has a higher index
-                if (luzon_log_index > main_luzon_log_index){
-                    startTransaction(main_db)
-                    // select the luzon_db log file and insert it into main_db luzon log file
-                    [rows] = await luzon_db.query(`SELECT * FROM luzon_log WHERE id > ${main_luzon_log_index}`);
-                    for (let i = 0; i < rows.length; i++){
-                        [rows] = await main_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${rows[i].id}, ${rows[i].log_entry})`);
-                    }
-                    endTransaction(main_db)
-                } else {
-                    //sync main_db luzon log file to luzon_db log file
-                    [rows] = await main_db.query(`SELECT * FROM luzon_log WHERE id > ${luzon_log_index}`);
-                    for (let i = 0; i < rows.length; i++){
-                        [rows] = await luzon_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${rows[i].id}, ${rows[i].log_entry})`);
-                    }
+                if (luzon_log_index < main_luzon_log_index){
+                    try{
+                        await startTransaction(luzon_db);
+                        //sync main_db luzon log file to luzon_db log file
+                        [rows] = await main_db.execute(`SELECT * FROM luzon_log WHERE id > ?`, [luzon_log_index]);
+                        console.log(rows)
+                        const temp = rows
+                        for(let row of temp){
+                            console.log("adding row" + row.id)
+                            await luzon_db.execute(`INSERT INTO luzon_log (id, log_entry) VALUES (?,?)`, [row.id, row.log_entry]);
+                        }
+                        await endTransaction(luzon_db);
+                        console.log("Synced main_db to luzon_db complete")
+                        } catch(err){
+                            console.error(`Error syncing main_db to luzon_db: ${err.message}`);
+                            await endTransaction(luzon_db, 'ROLLBACK');
+                        }
+                } 
+                else {
+                    try{
+                        await startTransaction(main_db);
+                        //sync main_db luzon log file to luzon_db log file
+                        [rows] = await luzon_db.execute(`SELECT * FROM luzon_log WHERE id > ?`, [main_luzon_log_index]);
+                        console.log(rows)
+                        const temp = rows
+                        for(let row of temp){
+                            console.log("adding row" + row.id)
+                            await main_db.execute(`INSERT INTO luzon_log (id, log_entry) VALUES (?,?)`, [row.id, row.log_entry]);
+                        }
+                        await endTransaction(main_db);
+                        console.log("Synced main_db to luzon_db complete")
+                        } catch(err){
+                            console.error(`Error syncing main_db to luzon_db: ${err.message}`);
+                            await endTransaction(main_db, 'ROLLBACK');
+                        }
                 }
             }
             else {
                 console.log("Log files are already in sync.");
-            
             }
         }
         //if vismin_db is up, sync vismin_db log file and main_db vismin log file
         if (statuses.vismin_status && (choice === "all" || choice === "vismin")){
-            //sync vismin_db log file and main_db vismin log file
-            let vismin_log_index = null;
-            let main_vismin_log_index = null;
+            //sync vismin_db log file and main_db vismin log file            
+            // Get latest index on log table for vismin_db and main_db
+            let vismin_log_index = await getLogFileIndex('vismin');
+            let main_vismin_log_index = await getLogFileIndex('main_vismin');
+            console.log(`vismin_log_index: ${vismin_log_index}`);
+            console.log(`main_vismin_log_index: ${main_vismin_log_index}`)
             let rows = [];
 
-            // Get latest index on log table for vismin_db and main_db
-            [rows] = getLogFileIndex('vismin');
-            if (rows.length === 0){
-                vismin_log_index = 0;
-            } else if (rows.length === 1) {
-                vismin_log_index = rows[0].id;
-            }
-            [rows] = getLogFileIndex('main_vismin');
-            if (rows.length === 0){
-                main_vismin_log_index = 0;
-            } else if (rows.length === 1) {
-                main_vismin_log_index = rows[0].id;
-            }
-            
             // If not sync, sync log files
             if (vismin_log_index !== main_vismin_log_index){
+                console.log("Log files are not in sync.")
                 //sync log files from whoever has a higher index
-                if (vismin_log_index > main_vismin_log_index){
-                    // select the vismin_db log file and insert it into main_db vismin log file
-                    [rows] = await vismin_db.query(`SELECT * FROM vismin_log WHERE id > ${main_vismin_log_index}`);
-                    for (let i = 0; i < rows.length; i++){
-                        [rows] = await main_db.query(`INSERT INTO vismin_log (id, log_entry) VALUES (${rows[i].id}, ${rows[i].log_entry})`);
-                    }
-                } else {
-                    //sync main_db vismin log file to vismin_db log file
-                    [rows] = await main_db.query(`SELECT * FROM vismin_log WHERE id > ${vismin_log_index}`);
-                    for (let i = 0; i < rows.length; i++){
-                        [rows] = await vismin_db.query(`INSERT INTO vismin_log (id, log_entry) VALUES (${rows[i].id}, ${rows[i].log_entry})`);
-                    }
+                if (vismin_log_index < main_vismin_log_index){
+                    try{
+                        await startTransaction(vismin_db);
+                        //sync main_db vismin log file to vismin_db log file
+                        [rows] = await main_db.execute(`SELECT * FROM vismin_log WHERE id > ?`, [vismin_log_index]);
+                        console.log(rows)
+                        const temp = rows
+                        for(let row of temp){
+                            console.log("adding row" + row.id)
+                            await vismin_db.execute(`INSERT INTO vismin_log (id, log_entry) VALUES (?,?)`, [row.id, row.log_entry]);
+                        }
+                        await endTransaction(vismin_db);
+                        console.log("Synced main_db to vismin_db complete")
+                        } catch(err){
+                            console.error(`Error syncing main_db to vismin_db: ${err.message}`);
+                            await endTransaction(vismin_db, 'ROLLBACK');
+                        }
+                } 
+                else {
+                    try{
+                        await startTransaction(main_db);
+                        //sync main_db vismin log file to vismin_db log file
+                        [rows] = await vismin_db.execute(`SELECT * FROM vismin_log WHERE id > ?`, [main_vismin_log_index]);
+                        const temp = rows
+                        for(let row of temp){
+                            console.log("adding row" + row.id)
+                            await main_db.execute(`INSERT INTO vismin_log (id, log_entry) VALUES (?,?)`, [row.id, row.log_entry]);
+                        }
+                        await endTransaction(main_db);
+                        console.log("Synced main_db to vismin_db complete")
+                        } catch(err){
+                            console.error(`Error syncing main_db to vismin_db: ${err.message}`);
+                            await endTransaction(main_db, 'ROLLBACK');
+                        }
                 }
+            }
+            else {
+                console.log("Log files are already in sync.");
             }
         }
     }
