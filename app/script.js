@@ -195,7 +195,7 @@ document.getElementById('add-appointment-form').addEventListener('submit', async
     document.getElementById('add-appointment-form').style.display = 'block';
     document.getElementById('add-appointment-modal-container').style.display = 'none';
 
-    if (response.status == 200) {
+    if (!response) {
         window.alert('Appointment added successfully!');
         document.getElementById('searchInput').value = data.apptid;
         searchBtn.click();

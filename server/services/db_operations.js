@@ -54,6 +54,62 @@ export async function searchAppointment(apptid) {
     }
 }
 
+// Add an appointment to the database
+export async function addAppointment(form) {
+    // For boolean values, 1 is true and 0 is false
+    const newVirtual = form.Virtual ? 1 : 0;
+    // Extract the date from the QueueDate string
+    const { apptid, pxid, doctorid, status, QueueDate, Type, Virtual, hospitalname, City, Province, Region } = form;
+
+    // Try main
+    try {
+        // Check if the region is Luzon or Visayas/Mindanao
+        if (form.Region === 'Luzon') {
+            // Check if it already exists
+            const [rows] = await main_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+            if (rows.length > 0) {
+                return { error: 'Appointment already exists' };
+            }
+            // Add the appointment
+            return await editDatabase('luzon', `INSERT INTO appointments (apptid, pxid, doctorid, status, QueueDate, \`type\`, \`Virtual\`, hospitalname, City, Province, Region) VALUES ('${apptid}', '${pxid}', '${doctorid}', '${status}', '${QueueDate}', '${Type}', '${newVirtual}', '${hospitalname}', '${City}', '${Province}', '${Region}')`);
+        } else if (form.Region === 'Visayas/Mindanao') {
+            // Check if it already exists
+            const [rows] = await main_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+            if (rows.length > 0) {
+                return { error: 'Appointment already exists' };
+            }
+            // Add the appointment
+            return await editDatabase('vismin', `INSERT INTO appointments (apptid, pxid, doctorid, status, QueueDate, \`type\`, \`Virtual\`, hospitalname, City, Province, Region) VALUES ('${apptid}', '${pxid}', '${doctorid}', '${status}', '${QueueDate}', '${Type}', '${newVirtual}', '${hospitalname}', '${City}', '${Province}', '${Region}')`);
+        }
+    // If main fails, try luzon and vismin
+    } catch {
+        try {
+            if (form.Region === 'Luzon') {
+                // Check if it already exists
+                const [luzonRows] = await luzon_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+                const [visminRows] = await vismin_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+                if (luzonRows.length > 0 || visminRows.length > 0) {
+                    return { error: 'Appointment already exists' };
+                }
+                // Add the appointment
+                return await editDatabase('luzon', `INSERT INTO appointments (apptid, pxid, doctorid, status, QueueDate, \`type\`, \`Virtual\`, hospitalname, City, Province, Region) VALUES ('${apptid}', '${pxid}', '${doctorid}', '${status}', '${QueueDate}', '${Type}', '${newVirtual}', '${hospitalname}', '${City}', '${Province}', '${Region}')`);
+            } else if (form.Region === 'Visayas/Mindanao') {
+                // Check if it already exists
+                const [luzonRows] = await luzon_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+                const [visminRows] = await vismin_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+                if (luzonRows.length > 0 || visminRows.length > 0) {
+                    return { error: 'Appointment already exists' };
+                }
+                // Add the appointment
+                return await editDatabase('vismin', `INSERT INTO appointments (apptid, pxid, doctorid, status, QueueDate, \`type\`, \`Virtual\`, hospitalname, City, Province, Region) VALUES ('${apptid}', '${pxid}', '${doctorid}', '${status}', '${QueueDate}', '${Type}', '${newVirtual}', '${hospitalname}', '${City}', '${Province}', '${Region}')`);
+            }
+        } catch (error) {
+            console.log("Error in main: " + error);
+            return { error: 'Error adding appointment' };
+        }
+    }
+}
+
 
 // Modified executeSQL function to handle transactions with an array of SQL statements 
 export async function startTransaction(pool, isolation = 'READ COMMITTED') {
@@ -389,5 +445,6 @@ export default {
     syncLogFiles,
     syncApptstoLogFiles,
     getLogFileIndex,
-    searchAppointment
+    searchAppointment,
+    addAppointment
 }
