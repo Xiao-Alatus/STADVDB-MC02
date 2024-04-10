@@ -29,7 +29,7 @@ router.get("/", (req, res) => {
 });
 
 // Modified executeSQL function to handle transactions with an array of SQL statements 
-function executeSQL(sqlStatements) {
+function executeSQL(sqlStatements, delay=false) {
     return new Promise((resolve, reject) => {
         connection.beginTransaction(err => {
             if (err) { reject(err); }
@@ -40,6 +40,7 @@ function executeSQL(sqlStatements) {
                     });
                 }
                 // DO SLEEP(5) to simulate a long running transaction
+                if(delay){
                 connection.query('DO SLEEP(5);', err => {
                     if (err) {
                         return connection.rollback(() => {
@@ -47,6 +48,7 @@ function executeSQL(sqlStatements) {
                         });
                     }
                 });
+                }
                 const promises = sqlStatements.map(statement => new Promise((resolve, reject) => {
                     connection.query(statement, (err, result) => {
                         if (err) {
@@ -151,6 +153,11 @@ router.get("/sync/:server", async(req, res) => {
     const server = req.params.server;
     await database.syncLogFiles(server);
     res.status(200).send(`Synced ${server} log files.`);
+})
+
+router.get("/index", async (req, res) => {
+    const status = await database.getLogFileIndex('luzon');
+    res.status(200).send("index: " + status);
 })
 
 
