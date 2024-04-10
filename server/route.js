@@ -1,97 +1,28 @@
 import express from "express";
-import mysql from "mysql2";
 import path from "path";
 import { fileURLToPath } from 'url';
-import database from "./services/db_operations.js";
+import database from './services/db_connections.js';
+import helper from './services/router_helper.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const router = express.Router();
 
-// MySQL connection
-const connection = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "password",
-    database: "apptdb",
-    port: 3306
-});
-
-connection.connect((err) => {
-    if (err) throw err;
-    console.log("Connected to MySQL Database");
-});
-
+// Serve the static files from the React app
 router.use(express.static(path.join(__dirname, '../app')));
 
+// An api endpoint that returns a short list of items
 router.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, '../app/index.html'));
 });
 
-// Modified executeSQL function to handle transactions with an array of SQL statements 
-function executeSQL(sqlStatements, delay=false) {
-    return new Promise((resolve, reject) => {
-        connection.beginTransaction(err => {
-            if (err) { reject(err); }
-            connection.query('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;', err => {
-                if (err) {
-                    return connection.rollback(() => {
-                        reject(err);
-                    });
-                }
-                // DO SLEEP(5) to simulate a long running transaction
-                if(delay){
-                connection.query('DO SLEEP(5);', err => {
-                    if (err) {
-                        return connection.rollback(() => {
-                            reject(err);
-                        });
-                    }
-                });
-                }
-                const promises = sqlStatements.map(statement => new Promise((resolve, reject) => {
-                    connection.query(statement, (err, result) => {
-                        if (err) {
-                            return reject(err);
-                        }
-                        resolve(result);
-                    });
-                }));
-                Promise.all(promises)
-                    .then(results => {
-                        connection.commit(err => {
-                            if (err) {
-                                return connection.rollback(() => {
-                                    reject(err);
-                                });
-                            }
-                            resolve(results.length === 1 ? results[0] : results);
-                        });
-                    })
-                    .catch(err => {
-                        connection.rollback(() => {
-                            reject(err);
-                        });
-                    });
-            });
-        });
-    });
-}
-
 // Search
 router.post("/search", async (req, res) => {
-    const appointmentID = req.body.searchInput;
-    let sql = "SELECT * FROM appointments";
-    if (appointmentID) {
-        // Ensure the appointmentID is properly sanitized to prevent SQL injection
-        sql += ` WHERE apptid = ${connection.escape(appointmentID)}`;
-    }
-    const result = await executeSQL([sql]);
-    res.json(result);
+    const appointment = await helper.searchAppointment(req.body.searchInput);
+    console.log(appointment);
+    res.json(appointment);
 });
 
-
-// ADD
+// Add
 router.post("/add", async (req, res) => {
     try {
         // For boolean values, 1 is true and 0 is false
@@ -109,7 +40,7 @@ router.post("/add", async (req, res) => {
     }
 });
 
-// DELETE
+// Delete
 router.post("/delete", async (req, res) => {
     try {
         const appointmentID = req.body.searchInput; 
@@ -124,8 +55,7 @@ router.post("/delete", async (req, res) => {
     }
 });
 
-
-// EDIT
+// Edit
 router.post("/edit", async (req, res) => {
     try {
         // For boolean values, 1 is true and 0 is false
@@ -143,23 +73,26 @@ router.post("/edit", async (req, res) => {
     }
 });
 
-
+// Test: Ping
 router.get("/ping", async (req, res) => {
     const status = await database.checkConnection();
     res.status(200).send(status);
 });
 
+// Test: Sync
 router.get("/sync/:server", async(req, res) => {
     const server = req.params.server;
     await database.syncLogFiles(server);
     res.status(200).send(`Synced ${server} log files.`);
 })
 
+// Test: Index
 router.get("/index", async (req, res) => {
     const status = await database.getLogFileIndex('luzon');
     res.status(200).send("index: " + status);
 })
 
+// Test: Update
 router.get("/update", async (req, res) => {
     await database.editDatabase('luzon', "INSERT INTO appointments (apptid) VALUES (1006);");
     res.status(200).send("finish");
