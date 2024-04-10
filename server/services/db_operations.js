@@ -240,6 +240,7 @@ export async function checkConnection(){
     return {main_status, luzon_status, vismin_status}
 }
 
+//syncs log files and appointments between servers
 export async function syncDatabase(serverlog = 'all'){
     let statuses = await checkConnection();
     if(serverlog === 'luzon' || serverlog === 'all') {
@@ -250,11 +251,15 @@ export async function syncDatabase(serverlog = 'all'){
 
             //update main log file and appts
             await startTransaction(main_db);
+            await main_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`)
             await syncApptstoLogFiles(main_db, oldMainIndex, "luzon");
+            await main_db.query(`UNLOCK TABLES`)
             await endTransaction(main_db);
             //update luzon log file and appts
             await startTransaction(luzon_db);
+            await luzon_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`)
             await syncApptstoLogFiles(luzon_db, oldRepIndex, "luzon");
+            await luzon_db.query(`UNLOCK TABLES`);
             await endTransaction(luzon_db);
         }
     }
@@ -266,11 +271,15 @@ export async function syncDatabase(serverlog = 'all'){
 
             //update main log file and appts
             await startTransaction(main_db);
+            await main_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`)
             await syncApptstoLogFiles(main_db, oldMainIndex, "vismin");
+            await main_db.query(`UNLOCK TABLES`);
             await endTransaction(main_db);
             //update vismin log file and appts
             await startTransaction(vismin_db);
+            await vismin_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`)
             await syncApptstoLogFiles(vismin_db, oldRepIndex, "vismin");
+            await vismin_db.query(`UNLOCK TABLES`);
             await endTransaction(vismin_db);
         }
     }
@@ -291,13 +300,17 @@ export async function editDatabase(serverlog, query){
             logFileIndex++;
             //update main log file and appts
             await startTransaction(main_db);
+            await main_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`);
             await main_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
             await syncApptstoLogFiles(main_db, oldMainIndex, "luzon");
+            await main_db.query(`UNLOCK TABLES`);
             await endTransaction(main_db);
             //update luzon log file and appts
             await startTransaction(luzon_db);
+            await luzon_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`);
             await luzon_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
             await syncApptstoLogFiles(luzon_db, oldRepIndex, "luzon");
+            await luzon_db.query(`UNLOCK TABLES`);
             await endTransaction(luzon_db);
         }
         else if (statuses.main_status){
@@ -306,8 +319,10 @@ export async function editDatabase(serverlog, query){
             console.log(`oldMainIndex: ${oldMainIndex}`)
             let logFileIndex = oldMainIndex + 1;
             await startTransaction(main_db);
+            await main_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`);
             await main_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
             await syncApptstoLogFiles(main_db, oldMainIndex, "luzon");
+            await main_db.query(`UNLOCK TABLES`);
             await endTransaction(main_db);
         }
         else if (statuses.luzon_status){
@@ -315,8 +330,10 @@ export async function editDatabase(serverlog, query){
             let oldRepIndex = await getLogFileIndex('luzon');
             let logFileIndex = oldRepIndex + 1;
             await startTransaction(luzon_db);
+            await luzon_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`);
             await luzon_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
             await syncApptstoLogFiles(luzon_db, oldRepIndex, "luzon");
+            await luzon_db.query(`UNLOCK TABLES`);
             await endTransaction(luzon_db);
         }
     }
@@ -332,13 +349,17 @@ export async function editDatabase(serverlog, query){
             logFileIndex++;
             //update main log file and appts
             await startTransaction(main_db);
+            await main_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`);
             await main_db.query(`INSERT INTO vismin_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
             await syncApptstoLogFiles(main_db, oldMainIndex, "vismin");
+            await main_db.query(`UNLOCK TABLES`);
             await endTransaction(main_db);
             //update vismin log file and appts
             await startTransaction(vismin_db);
+            await vismin_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`);
             await vismin_db.query(`INSERT INTO vismin_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
             await syncApptstoLogFiles(vismin_db, oldRepIndex, "vismin");
+            await vismin_db.query(`UNLOCK TABLES`);
             await endTransaction(vismin_db);
         }
         else if (statuses.main_status){
@@ -346,8 +367,10 @@ export async function editDatabase(serverlog, query){
             let oldMainIndex = await getLogFileIndex('main_vismin');
             let logFileIndex = oldMainIndex + 1;
             await startTransaction(main_db);
+            await main_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`);
             await main_db.query(`INSERT INTO vismin_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
             await syncApptstoLogFiles(main_db, oldMainIndex, "vismin");
+            await main_db.query(`UNLOCK TABLES`);
             await endTransaction(main_db);
         }
         else if (statuses.vismin_status){
@@ -355,8 +378,10 @@ export async function editDatabase(serverlog, query){
             let oldRepIndex = await getLogFileIndex('vismin');
             let logFileIndex = oldRepIndex + 1;
             await startTransaction(vismin_db);
+            await vismin_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`);
             await vismin_db.query(`INSERT INTO vismin_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
             await syncApptstoLogFiles(vismin_db, oldRepIndex, "vismin");
+            await vismin_db.query(`UNLOCK TABLES`);
             await endTransaction(vismin_db);
         }
     }
@@ -408,6 +433,8 @@ export async function syncLogFiles(choice = "all"){
                 if (luzon_log_index < main_luzon_log_index){
                     try{
                         await startTransaction(luzon_db);
+                        await main_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`);
+                        await luzon_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`);
                         //sync main_db luzon log file to luzon_db log file
                         [rows] = await main_db.execute(`SELECT * FROM luzon_log WHERE id > ?`, [luzon_log_index]);
                         console.log(rows)
@@ -416,16 +443,22 @@ export async function syncLogFiles(choice = "all"){
                             console.log("adding row" + row.id)
                             await luzon_db.execute(`INSERT INTO luzon_log (id, log_entry) VALUES (?,?)`, [row.id, row.log_entry]);
                         }
+                        await main_db.query(`UNLOCK TABLES`)
+                        await luzon_db.query(`UNLOCK TABLES`)
                         await endTransaction(luzon_db);
                         console.log("Synced main_db to luzon_db complete")
                         } catch(err){
                             console.error(`Error syncing main_db to luzon_db: ${err.message}`);
+                            await main_db.query(`UNLOCK TABLES`)
+                            await luzon_db.query(`UNLOCK TABLES`)
                             await endTransaction(luzon_db, 'ROLLBACK');
                         }
                 } 
                 else {
                     try{
                         await startTransaction(main_db);
+                        await main_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`);
+                        await luzon_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE`);
                         //sync main_db luzon log file to luzon_db log file
                         [rows] = await luzon_db.execute(`SELECT * FROM luzon_log WHERE id > ?`, [main_luzon_log_index]);
                         console.log(rows)
@@ -434,10 +467,14 @@ export async function syncLogFiles(choice = "all"){
                             console.log("adding row" + row.id)
                             await main_db.execute(`INSERT INTO luzon_log (id, log_entry) VALUES (?,?)`, [row.id, row.log_entry]);
                         }
+                        await main_db.query(`UNLOCK TABLES`);
+                        await luzon_db.query(`UNLOCK TABLES`);
                         await endTransaction(main_db);
                         console.log("Synced main_db to luzon_db complete")
                         } catch(err){
                             console.error(`Error syncing main_db to luzon_db: ${err.message}`);
+                            await main_db.query(`UNLOCK TABLES`);
+                            await luzon_db.query(`UNLOCK TABLES`);
                             await endTransaction(main_db, 'ROLLBACK');
                         }
                 }
@@ -463,6 +500,8 @@ export async function syncLogFiles(choice = "all"){
                 if (vismin_log_index < main_vismin_log_index){
                     try{
                         await startTransaction(vismin_db);
+                        await main_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`);
+                        await vismin_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`);
                         //sync main_db vismin log file to vismin_db log file
                         [rows] = await main_db.execute(`SELECT * FROM vismin_log WHERE id > ?`, [vismin_log_index]);
                         console.log(rows)
@@ -471,16 +510,22 @@ export async function syncLogFiles(choice = "all"){
                             console.log("adding row" + row.id)
                             await vismin_db.execute(`INSERT INTO vismin_log (id, log_entry) VALUES (?,?)`, [row.id, row.log_entry]);
                         }
+                        await main_db.query(`UNLOCK TABLES`);
+                        await vismin_db.query(`UNLOCK TABLES`);
                         await endTransaction(vismin_db);
                         console.log("Synced main_db to vismin_db complete")
                         } catch(err){
                             console.error(`Error syncing main_db to vismin_db: ${err.message}`);
+                            await main_db.query(`UNLOCK TABLES`);
+                            await vismin_db.query(`UNLOCK TABLES`);
                             await endTransaction(vismin_db, 'ROLLBACK');
                         }
                 } 
                 else {
                     try{
                         await startTransaction(main_db);
+                        await main_db.query(`LOCK TABLES appointments WRITE, luzon_log WRITE, vismin_log WRITE`);
+                        await vismin_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`);
                         //sync main_db vismin log file to vismin_db log file
                         [rows] = await vismin_db.execute(`SELECT * FROM vismin_log WHERE id > ?`, [main_vismin_log_index]);
                         const temp = rows
@@ -488,10 +533,14 @@ export async function syncLogFiles(choice = "all"){
                             console.log("adding row" + row.id)
                             await main_db.execute(`INSERT INTO vismin_log (id, log_entry) VALUES (?,?)`, [row.id, row.log_entry]);
                         }
+                        await main_db.query(`UNLOCK TABLES`);
+                        await vismin_db.query(`UNLOCK TABLES`);
                         await endTransaction(main_db);
                         console.log("Synced main_db to vismin_db complete")
                         } catch(err){
                             console.error(`Error syncing main_db to vismin_db: ${err.message}`);
+                            await main_db.query(`UNLOCK TABLES`);
+                            await vismin_db.query(`UNLOCK TABLES`);
                             await endTransaction(main_db, 'ROLLBACK');
                         }
                 }
