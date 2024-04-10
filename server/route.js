@@ -161,8 +161,8 @@ router.get("/index", async (req, res) => {
 })
 
 router.get("/update", async (req, res) => {
-    const status = await database.updateDatabase('luzon', "INSERT INTO appointments (apptid) VALUES (1000);");
-    res.status(200).send("update: " + status);
+    await database.updateDatabase('luzon', "INSERT INTO appointments (apptid) VALUES (1006);");
+    res.status(200).send("finish");
 })
 
 export default router;

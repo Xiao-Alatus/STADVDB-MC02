@@ -72,6 +72,7 @@ export async function updateDatabase(serverlog, query){
         else if (statuses.main_status){
             //update main log file
             let oldMainIndex = await getLogFileIndex('main_luzon');
+            console.log(`oldMainIndex: ${oldMainIndex}`)
             let logFileIndex = oldMainIndex + 1;
             await startTransaction(main_db);
             await main_db.query(`INSERT INTO luzon_log (id, log_entry) VALUES (${logFileIndex}, "${query}")`);
@@ -276,15 +277,20 @@ export async function syncApptstoLogFiles(pool, prev_index, table_name){
     let rows = [];
     try{
         //get all log entries that have not been executed yet
-        [rows] = await pool.execute(`SELECT * FROM ${table_name}_log WHERE id > ?`, [table_name, prev_index]);
-        //execute all log entries
-        const temp = rows
-        for(let row of temp){
-            console.log("executing row" + row.id)
-            await pool.execute(row.log_entry);
-        }
+        [rows] = await pool.execute(`SELECT * FROM ${table_name}_log WHERE id > ?`, [prev_index]);
+        console.log(rows)
     } catch(err){
         console.error(`Error syncing log files to appointments: ${err.message}`);
+    }
+        //execute all log entries
+    const temp = rows
+    for(let row of temp){
+            console.log("executing row " + row.id + " " + row.log_entry)
+        try{
+        await pool.execute(row.log_entry);
+        } catch(err){
+            console.error(`Error executing log entry: ${err.message}`);
+        }
     }
 }
 
