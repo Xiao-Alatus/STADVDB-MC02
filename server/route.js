@@ -147,5 +147,11 @@ router.get("/ping", async (req, res) => {
     res.status(200).send(status);
 });
 
+router.get("/sync/:server", async(req, res) => {
+    const server = req.params.server;
+    await database.syncLogFiles(server);
+    res.status(200).send(`Synced ${server} log files.`);
+})
+
 
 export default router;

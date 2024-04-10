@@ -1,4 +1,4 @@
-import mysql from 'mysql2'
+import mysql from 'mysql2/promise'
 
 export const main_db = mysql.createPool({
     host: "ccscloud.dlsu.edu.ph",
