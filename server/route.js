@@ -80,14 +80,9 @@ function executeSQL(sqlStatements, delay=false) {
 
 // Search
 router.post("/search", async (req, res) => {
-    const appointmentID = req.body.searchInput;
-    let sql = "SELECT * FROM appointments";
-    if (appointmentID) {
-        // Ensure the appointmentID is properly sanitized to prevent SQL injection
-        sql += ` WHERE apptid = ${connection.escape(appointmentID)}`;
-    }
-    const result = await executeSQL([sql]);
-    res.json(result);
+    const appointment = await database.searchAppointment(req.body.searchInput);
+    console.log(appointment);
+    res.json(appointment);
 });
 
 

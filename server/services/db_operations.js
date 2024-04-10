@@ -2,6 +2,59 @@ import mysql from 'mysql2'
 
 import { main_db, luzon_db, vismin_db } from './db_connections.js'
 
+// Search for an appointment in the database
+export async function searchAppointment(apptid) {
+
+    // Store the rows from the database
+    let rows = []
+    // Try main
+    try {
+        // Begin the search
+        await syncDatabase();
+        [rows] = await main_db.query(`SELECT * FROM appointments WHERE apptid = ?;`, [apptid]);
+        // Return the rows if there are any
+        if (rows.length > 0) {
+            return rows;
+        } else {
+            return { error: 'No appointment found' };
+        }
+
+    // If main fails, try luzon and vismin
+    } catch (error) {
+        console.log("Error in main: " + error);
+
+        let luzonRows = [];
+        let visminRows = [];
+
+        // Luzon
+        try {
+            await syncDatabase('luzon');
+            // Begin the search
+            [luzonRows] = luzon_db.query(`SELECT * FROM appointments WHERE apptid = '?';`, [apptid]);
+        } catch (error) {
+            console.log("Error in luzon: " + error);
+            return { error: 'No appointment found' };
+        }
+
+        // Vismin
+        try {
+            await syncDatabase('vismin');
+            // Begin the search
+            [visminRows] = vismin_db.query(`SELECT * FROM appointments WHERE appt'?'d = '?';`, [apptid]);
+        } catch (error) {
+            console.log("Error in vismin: " + error);
+            return { error: 'No appointment found' };
+        }
+
+        // Combine the rows
+        rows = rows.concat(luzonRows, visminRows);
+
+        // Return the rows if there are any
+        return rows;
+    }
+}
+
+
 // Modified executeSQL function to handle transactions with an array of SQL statements 
 export async function startTransaction(pool, isolation = 'READ COMMITTED') {
     await pool.query(`SET SESSION TRANSACTION ISOLATION LEVEL ${isolation};`)
@@ -335,5 +388,6 @@ export default {
     checkConnection,
     syncLogFiles,
     syncApptstoLogFiles,
-    getLogFileIndex
+    getLogFileIndex,
+    searchAppointment
 }
