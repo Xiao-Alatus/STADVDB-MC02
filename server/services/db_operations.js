@@ -342,6 +342,7 @@ export async function editDatabase(serverlog, query){
     if(serverlog === 'luzon') {
         try{
             if(statuses.main_status && statuses.luzon_status){
+                await syncDatabase('luzon');
                 // get latest index on log table for luzon_db
                 let logFileIndex = await getLogFileIndex('main_luzon');
                 //update main log file and appts
@@ -424,7 +425,6 @@ export async function editDatabase(serverlog, query){
                 // get latest index on log table for vismin_db
                 let logFileIndex = await getLogFileIndex('main_vismin');
                 //update main log file and appts
-                console.log('proceednt')
                 try{
                     await startTransaction(main_db, 'SERIALIZABLE');
                     await main_db.query(`LOCK TABLES appointments WRITE, vismin_log WRITE`);
