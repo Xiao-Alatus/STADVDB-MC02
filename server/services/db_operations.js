@@ -230,6 +230,7 @@ export async function startTransaction(pool, isolation = 'READ COMMITTED') {
 
 export async function endTransaction(pool, status = 'COMMIT'){
     await pool.query(`${status};`)
+    console.log(`Transaction ended with status ${status}.`)
 }
 
 export async function checkConnection(){
@@ -269,11 +270,11 @@ export async function syncDatabase(serverlog = 'all'){
     let statuses = await checkConnection();
     if((serverlog === 'luzon' || serverlog === 'all') && (statuses.main_status && statuses.luzon_status)){
         try{
+            await startTransaction(main_db, 'SERIALIZABLE');
+            await startTransaction(luzon_db, 'SERIALIZABLE');
             let oldMainIndex = await getLogFileIndex('main_luzon');
             let oldRepIndex = await getLogFileIndex('luzon');
             if(oldMainIndex !== oldRepIndex){
-                await startTransaction(main_db, 'SERIALIZABLE');
-                await startTransaction(luzon_db, 'SERIALIZABLE');
                 //sync log files
                 await main_db.query(`LOCK TABLES luzon_log WRITE, appointments WRITE`)
                 await luzon_db.query(`LOCK TABLES luzon_log WRITE, appointments WRITE`)
@@ -284,12 +285,12 @@ export async function syncDatabase(serverlog = 'all'){
                 await syncApptstoLogFiles(luzon_db, oldRepIndex, "luzon");
                 await main_db.query(`UNLOCK TABLES`);
                 await luzon_db.query(`UNLOCK TABLES`);
-                await endTransaction(main_db);
-                await endTransaction(luzon_db);
             }
             else {
                 console.log("Luzon Log files are already in sync.");
             }
+            await endTransaction(main_db);
+            await endTransaction(luzon_db);
         } catch(err){
             console.log(`Error syncing luzon: ${err.message}`);
             await main_db.query(`UNLOCK TABLES`);
@@ -303,12 +304,12 @@ export async function syncDatabase(serverlog = 'all'){
     }
     if((serverlog === 'vismin' || serverlog === 'all') && (statuses.main_status && statuses.vismin_status)){
         try{
+            await startTransaction(main_db, 'SERIALIZABLE');
+            await startTransaction(vismin_db, 'SERIALIZABLE');
             let oldMainIndex = await getLogFileIndex('main_vismin');
             let oldRepIndex = await getLogFileIndex('vismin');
             if(oldMainIndex !== oldRepIndex){
-                await startTransaction(main_db, 'SERIALIZABLE');
-                await startTransaction(vismin_db, 'SERIALIZABLE');
-                //sync log files
+            //sync log files
                 await main_db.query(`LOCK TABLES vismin_log WRITE, appointments WRITE`)
                 await vismin_db.query(`LOCK TABLES vismin_log WRITE, appointments WRITE`)
                 await syncLogFiles('vismin');
@@ -317,12 +318,12 @@ export async function syncDatabase(serverlog = 'all'){
                 await syncApptstoLogFiles(vismin_db, oldRepIndex, "vismin");
                 await main_db.query(`UNLOCK TABLES`);
                 await vismin_db.query(`UNLOCK TABLES`);
-                await endTransaction(main_db);
-                await endTransaction(vismin_db);
             }
             else {
                 console.log("Vismin Log files are already in sync.");
             }
+            await endTransaction(main_db);
+            await endTransaction(vismin_db);
         } catch(err){
             console.log(`Error syncing vismin: ${err.message}`);
             await main_db.query(`UNLOCK TABLES`);
